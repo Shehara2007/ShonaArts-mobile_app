@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header, PrimaryButton, LoadingSpinner, ErrorState } from '../components/common';
@@ -25,7 +26,7 @@ export const PaintingDetailScreen: React.FC<Props> = ({ navigation, route }) => 
   const { paintingId } = route.params as { paintingId: string };
   const dispatch = useAppDispatch();
   const { items: wishlistItems } = useAppSelector((state) => state.wishlist);
-  
+
   const [painting, setPainting] = useState<Painting | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,16 +92,25 @@ export const PaintingDetailScreen: React.FC<Props> = ({ navigation, route }) => 
       if (existingItem) {
         await wishlistService.remove(existingItem.id);
         dispatch(removeFromWishlist(existingItem.id));
-        Alert.alert('Removed', 'Removed from wishlist');
       } else {
         const response = await wishlistService.add(painting.id);
         if (response.success) {
           dispatch(addToWishlist(response.data));
-          Alert.alert('Added', 'Added to wishlist');
         }
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to update wishlist');
+    }
+  };
+
+  const handleShare = async () => {
+    if (!painting) return;
+    try {
+      await Share.share({
+        message: `Check out "${painting.title}" by ${painting.artist} on Shona Arts — ${formatCurrency(painting.price)}`,
+      });
+    } catch (error) {
+      // user dismissed share sheet, nothing to do
     }
   };
 
@@ -135,92 +145,100 @@ export const PaintingDetailScreen: React.FC<Props> = ({ navigation, route }) => 
         title="Painting Detail"
         onBackPress={() => navigation.goBack()}
         rightComponent={
-          <TouchableOpacity onPress={handleWishlistToggle} style={styles.wishlistButton}>
-            <Ionicons
-              name={isInWishlist ? 'heart' : 'heart-outline'}
-              size={24}
-              color={isInWishlist ? '#E91E63' : '#fff'}
-            />
+          <TouchableOpacity onPress={handleShare} style={styles.iconButton} activeOpacity={0.7}>
+            <Ionicons name="share-outline" size={18} color={lightTheme.colors.text} />
           </TouchableOpacity>
         }
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: painting.image }} style={styles.image} />
-
-        {painting.featured && (
-          <View style={styles.featuredBadge}>
-            <Ionicons name="star" size={16} color="#fff" />
-            <Text style={styles.featuredText}>Featured</Text>
-          </View>
-        )}
+        <View style={styles.imageWrap}>
+          <Image source={{ uri: painting.image }} style={styles.image} />
+          <TouchableOpacity
+            onPress={handleWishlistToggle}
+            style={styles.wishlistButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={isInWishlist ? 'heart' : 'heart-outline'}
+              size={18}
+              color={isInWishlist ? lightTheme.colors.error : lightTheme.colors.text}
+            />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.detailsContainer}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.title}>{painting.title}</Text>
-              <Text style={styles.artist}>by {painting.artist}</Text>
+          <Text style={styles.title}>{painting.title}</Text>
+          <View style={styles.artistRow}>
+            <View style={styles.artistAvatar}>
+              <Text style={styles.artistAvatarText}>{painting.artist.charAt(0)}</Text>
             </View>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={20} color="#FFB800" />
-              <Text style={styles.rating}>{painting.rating}</Text>
-            </View>
-          </View>
-
-          <View style={styles.categoryContainer}>
-            <Ionicons name="color-filter" size={16} color={lightTheme.colors.primary} />
-            <Text style={styles.category}>{painting.category}</Text>
-          </View>
-
-          <View style={styles.priceContainer}>
-            <Text style={styles.price}>{formatCurrency(painting.price)}</Text>
-            <View style={styles.stockContainer}>
-              {painting.stock > 0 ? (
-                <>
-                  <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
-                  <Text style={styles.inStock}>{painting.stock} in stock</Text>
-                </>
-              ) : (
-                <>
-                  <Ionicons name="close-circle" size={18} color="#F44336" />
-                  <Text style={styles.outOfStock}>Out of Stock</Text>
-                </>
-              )}
+            <Text style={styles.artist}>By {painting.artist}</Text>
+            <View style={styles.categoryChip}>
+              <Text style={styles.category}>{painting.category}</Text>
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <View>
+                <Text style={styles.infoLabel}>Price</Text>
+                <Text style={styles.priceValue}>{formatCurrency(painting.price)}</Text>
+              </View>
+              <View style={styles.infoRight}>
+                <Text style={styles.infoLabel}>Availability</Text>
+                <View style={styles.stockRow}>
+                  <Ionicons
+                    name={painting.stock > 0 ? 'checkmark-circle' : 'close-circle'}
+                    size={14}
+                    color={painting.stock > 0 ? lightTheme.colors.success : lightTheme.colors.error}
+                  />
+                  <Text style={[styles.stockText, { color: painting.stock > 0 ? lightTheme.colors.success : lightTheme.colors.error }]}>
+                    {painting.stock > 0 ? `${painting.stock} in stock` : 'Out of stock'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Quantity</Text>
+              <View style={styles.quantityContainer}>
+                <TouchableOpacity
+                  style={[styles.quantityButton, quantity === 1 && styles.quantityButtonDisabled]}
+                  onPress={decrementQuantity}
+                  disabled={quantity === 1}
+                >
+                  <Ionicons name="remove" size={16} color={quantity === 1 ? lightTheme.colors.textTertiary : '#fff'} />
+                </TouchableOpacity>
+                <View style={styles.quantityValueBox}>
+                  <Text style={styles.quantityText}>{quantity}</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.quantityButton, quantity >= painting.stock && styles.quantityButtonDisabled]}
+                  onPress={incrementQuantity}
+                  disabled={quantity >= painting.stock}
+                >
+                  <Ionicons name="add" size={16} color={quantity >= painting.stock ? lightTheme.colors.textTertiary : '#fff'} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.ratingRow}>
+            <Ionicons name="star" size={15} color={lightTheme.colors.accent} />
+            <Text style={styles.ratingText}>{painting.rating} rating</Text>
+            {painting.featured && (
+              <View style={styles.featuredTag}>
+                <Ionicons name="sparkles" size={11} color={lightTheme.colors.accent} />
+                <Text style={styles.featuredTagText}>Featured Piece</Text>
+              </View>
+            )}
+          </View>
 
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.description}>{painting.description}</Text>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionTitle}>Quantity</Text>
-          <View style={styles.quantityContainer}>
-            <TouchableOpacity
-              style={[styles.quantityButton, quantity === 1 && styles.quantityButtonDisabled]}
-              onPress={decrementQuantity}
-              disabled={quantity === 1}
-            >
-              <Ionicons name="remove" size={20} color={quantity === 1 ? '#BDBDBD' : '#212121'} />
-            </TouchableOpacity>
-            <Text style={styles.quantityText}>{quantity}</Text>
-            <TouchableOpacity
-              style={[
-                styles.quantityButton,
-                quantity >= painting.stock && styles.quantityButtonDisabled,
-              ]}
-              onPress={incrementQuantity}
-              disabled={quantity >= painting.stock}
-            >
-              <Ionicons
-                name="add"
-                size={20}
-                color={quantity >= painting.stock ? '#BDBDBD' : '#212121'}
-              />
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
 
@@ -237,6 +255,7 @@ export const PaintingDetailScreen: React.FC<Props> = ({ navigation, route }) => 
           loading={addingToCart}
           disabled={painting.stock === 0}
           style={styles.addButton}
+          icon={<Ionicons name="cart" size={17} color="#fff" />}
         />
       </View>
     </View>
@@ -246,172 +265,216 @@ export const PaintingDetailScreen: React.FC<Props> = ({ navigation, route }) => 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
   },
   content: {
     flex: 1,
   },
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: lightTheme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...lightTheme.shadows.small,
+  },
+  imageWrap: {
+    position: 'relative',
+    marginHorizontal: 20,
+  },
   image: {
     width: '100%',
-    height: 400,
-    backgroundColor: '#F5F5F5',
-  },
-  featuredBadge: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: lightTheme.colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  featuredText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
+    height: 320,
+    borderRadius: lightTheme.borderRadius.xl,
+    backgroundColor: lightTheme.colors.surfaceAlt,
   },
   wishlistButton: {
-    padding: 4,
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: lightTheme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   detailsContainer: {
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  headerLeft: {
-    flex: 1,
-    marginRight: 16,
+    padding: 20,
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#212121',
-    marginBottom: 4,
+    fontFamily: lightTheme.fonts.display,
+    color: lightTheme.colors.text,
+    marginBottom: 12,
+  },
+  artistRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 8,
+  },
+  artistAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: lightTheme.colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  artistAvatarText: {
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#fff',
   },
   artist: {
-    fontSize: 16,
-    color: '#757575',
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.bodyMedium,
+    color: lightTheme.colors.textSecondary,
+    flex: 1,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF9E6',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  rating: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#212121',
-    marginLeft: 4,
-  },
-  categoryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+  categoryChip: {
+    backgroundColor: lightTheme.colors.primaryLight,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: lightTheme.borderRadius.round,
   },
   category: {
-    fontSize: 14,
-    color: lightTheme.colors.primary,
-    fontWeight: '600',
-    marginLeft: 6,
+    fontSize: 11,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.text,
   },
-  priceContainer: {
+  infoCard: {
+    backgroundColor: lightTheme.colors.primary,
+    borderRadius: lightTheme.borderRadius.lg,
+    padding: 18,
+    marginBottom: 20,
+  },
+  infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
   },
-  price: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: lightTheme.colors.primary,
+  infoRight: {
+    alignItems: 'flex-end',
   },
-  stockContainer: {
+  infoLabel: {
+    fontSize: 11,
+    fontFamily: lightTheme.fonts.body,
+    color: 'rgba(255,255,255,0.55)',
+    marginBottom: 4,
+  },
+  priceValue: {
+    fontSize: 24,
+    fontFamily: lightTheme.fonts.display,
+    color: lightTheme.colors.accent,
+  },
+  stockRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
-  inStock: {
-    fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  outOfStock: {
-    fontSize: 14,
-    color: '#F44336',
-    fontWeight: '600',
-    marginLeft: 6,
+  stockText: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodySemibold,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     marginVertical: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#212121',
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 15,
-    color: '#616161',
-    lineHeight: 24,
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
   quantityButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    width: 32,
+    height: 32,
+    borderRadius: lightTheme.borderRadius.sm,
+    backgroundColor: 'rgba(255,255,255,0.16)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityButtonDisabled: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  quantityValueBox: {
+    width: 32,
+    height: 32,
+    borderRadius: lightTheme.borderRadius.sm,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   quantityText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#212121',
-    marginHorizontal: 24,
-    minWidth: 40,
-    textAlign: 'center',
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 20,
+  },
+  ratingText: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodyMedium,
+    color: lightTheme.colors.textSecondary,
+    marginRight: 8,
+  },
+  featuredTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: lightTheme.colors.warningLight,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: lightTheme.borderRadius.round,
+  },
+  featuredTagText: {
+    fontSize: 11,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.accentDark,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontFamily: lightTheme.fonts.displaySemibold,
+    color: lightTheme.colors.text,
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textSecondary,
+    lineHeight: 22,
+    marginBottom: 24,
   },
   footer: {
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: lightTheme.colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#fff',
+    borderTopColor: lightTheme.colors.border,
   },
   totalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    marginRight: 16,
   },
   totalLabel: {
-    fontSize: 16,
-    color: '#757575',
+    fontSize: 11,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textSecondary,
   },
   totalPrice: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#212121',
+    fontSize: 18,
+    fontFamily: lightTheme.fonts.displaySemibold,
+    color: lightTheme.colors.text,
   },
   addButton: {
+    flex: 1,
     marginTop: 0,
   },
 });

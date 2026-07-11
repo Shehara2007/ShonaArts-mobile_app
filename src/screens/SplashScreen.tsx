@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,39 +12,36 @@ type Props = NativeStackScreenProps<any, 'Splash'>;
 
 export const SplashScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const fadeAnim = new Animated.Value(0);
-  const scaleAnim = new Animated.Value(0.3);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.7)).current;
 
   useEffect(() => {
-    // Animate logo
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
+        duration: 700,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        tension: 10,
-        friction: 3,
+        tension: 40,
+        friction: 6,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Check auth status
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Show splash for 2 seconds
-      
+      await new Promise(resolve => setTimeout(resolve, 1600));
+
       const authData = await getAuthData();
-      
+
       if (authData) {
         dispatch(setCredentials(authData));
-        
-        // Navigate based on user role
+
         if (authData.user.role === 'admin') {
           navigation.replace('AdminDashboard');
         } else {
@@ -62,6 +59,8 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <LinearGradient
       colors={[lightTheme.colors.gradient1, lightTheme.colors.gradient2]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
       style={styles.container}
     >
       <Animated.View
@@ -73,11 +72,13 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
           },
         ]}
       >
-        <Ionicons name="color-palette" size={100} color="#fff" />
+        <View style={styles.logoCircle}>
+          <Ionicons name="color-palette" size={56} color="#fff" />
+        </View>
         <Text style={styles.title}>Shona Arts</Text>
         <Text style={styles.subtitle}>AI Powered Art Marketplace</Text>
       </Animated.View>
-      
+
       <Text style={styles.footer}>Made with ♥ for University Coursework</Text>
     </LinearGradient>
   );
@@ -92,21 +93,32 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
   },
+  logoCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   title: {
-    fontSize: 40,
-    fontWeight: '700',
+    fontSize: 36,
+    fontFamily: lightTheme.fonts.display,
     color: '#fff',
     marginTop: 24,
+    letterSpacing: 0.3,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
     marginTop: 8,
+    fontFamily: lightTheme.fonts.bodyMedium,
   },
   footer: {
     position: 'absolute',
-    bottom: 32,
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    bottom: 40,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    fontFamily: lightTheme.fonts.bodyMedium,
   },
 });

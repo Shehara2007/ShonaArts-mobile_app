@@ -192,7 +192,7 @@ export const AdminPaintingsScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F6F1E7',
   },
   addButton: {
     width: 36,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: lightTheme.borderRadius.lg,
     padding: 12,
     marginBottom: 12,
     ...lightTheme.shadows.small,
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 8,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EEEDF5',
   },
   cardContent: {
     flex: 1,
@@ -226,12 +226,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#212121',
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#18181B',
   },
   artist: {
     fontSize: 13,
-    color: '#757575',
+    color: '#71717A',
     marginTop: 2,
   },
   metaRow: {
@@ -248,16 +248,16 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: lightTheme.fonts.bodySemibold,
     color: lightTheme.colors.primary,
   },
   stock: {
     fontSize: 12,
-    color: '#9E9E9E',
+    color: '#A1A1AA',
   },
   price: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
     marginTop: 4,
   },
@@ -273,9 +273,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editButton: {
-    backgroundColor: '#03A9F4',
+    backgroundColor: '#C0954C',
   },
   deleteButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: '#C0503F',
   },
 });

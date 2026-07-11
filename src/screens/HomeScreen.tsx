@@ -7,7 +7,10 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
+  Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   SearchBar,
   PaintingCard,
@@ -28,7 +31,7 @@ import {
 } from '../redux/slices/paintingSlice';
 import { addToWishlist, removeFromWishlist } from '../redux/slices/wishlistSlice';
 import { selectCartItemCount } from '../redux/slices/cartSlice';
-import { debounce } from '../utils/helpers';
+import { formatCurrency, debounce } from '../utils/helpers';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type Props = NativeStackScreenProps<any, 'Home'>;
@@ -40,7 +43,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   );
   const { items: wishlistItems } = useAppSelector((state) => state.wishlist);
   const cartCount = useAppSelector(selectCartItemCount);
-  
+
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
@@ -49,19 +52,14 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   }, [filters]);
 
   const loadPaintings = async () => {
-    console.log('🏠 HomeScreen: Loading paintings...');
     dispatch(setLoading(true));
-    dispatch(setError(null)); // Clear previous errors
+    dispatch(setError(null));
     try {
-      console.log('📡 HomeScreen: Calling paintingService.getAll with filters:', filters);
       const response = await paintingService.getAll(filters);
-      console.log('📥 HomeScreen: Received response, success:', response.success, 'paintings:', response.data?.length);
       if (response.success) {
         dispatch(setPaintings(response.data));
-        console.log('✅ HomeScreen: Paintings loaded successfully:', response.data.length);
       }
     } catch (err: any) {
-      console.error('❌ HomeScreen: Failed to load paintings:', err);
       dispatch(setError(err.message || 'Failed to load paintings'));
     } finally {
       dispatch(setLoading(false));
@@ -107,17 +105,21 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const featured = paintings.find((p) => p.featured) ?? paintings[0];
+
   const renderHeader = () => (
     <>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Welcome to</Text>
-          <Text style={styles.headerTitle}>Shona Arts</Text>
+      <View style={styles.topBar}>
+        <View style={styles.brand}>
+          <Ionicons name="sparkles" size={16} color={lightTheme.colors.accent} />
+          <Text style={styles.brandText}>Shona Arts</Text>
         </View>
         <TouchableOpacity
           style={styles.cartButton}
           onPress={() => navigation.navigate('Cart')}
+          activeOpacity={0.8}
         >
+          <Ionicons name="cart-outline" size={19} color={lightTheme.colors.text} />
           {cartCount > 0 && (
             <View style={styles.cartBadge}>
               <Text style={styles.cartBadgeText}>{cartCount}</Text>
@@ -131,6 +133,50 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         onChangeText={handleSearch}
         placeholder="Search paintings, artists..."
       />
+
+      {featured && !filters.search && selectedCategory === 'All' && (
+        <View style={styles.featuredSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Featured Piece</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.featuredCard}
+            activeOpacity={0.9}
+            onPress={() => handlePaintingPress(featured.id)}
+          >
+            <Image source={{ uri: featured.image }} style={styles.featuredImage} />
+            <TouchableOpacity
+              style={styles.featuredHeart}
+              onPress={() => handleWishlistToggle(featured.id)}
+              hitSlop={8}
+            >
+              <Ionicons
+                name={wishlistItems.some((w) => w.painting.id === featured.id) ? 'heart' : 'heart-outline'}
+                size={17}
+                color={wishlistItems.some((w) => w.painting.id === featured.id) ? lightTheme.colors.error : '#fff'}
+              />
+            </TouchableOpacity>
+            <View style={styles.featuredCategoryPill}>
+              <Text style={styles.featuredCategoryText}>{featured.category}</Text>
+            </View>
+            <View style={styles.featuredOverlay}>
+              <Text style={styles.featuredTitle} numberOfLines={1}>{featured.title}</Text>
+              <View style={styles.featuredMetaRow}>
+                <View style={styles.featuredPriceWrap}>
+                  <Ionicons name="pricetag" size={12} color={lightTheme.colors.accent} />
+                  <Text style={styles.featuredPrice}>{formatCurrency(featured.price)}</Text>
+                </View>
+                <View style={styles.featuredArtistWrap}>
+                  <View style={styles.artistAvatar}>
+                    <Text style={styles.artistAvatarText}>{featured.artist.charAt(0)}</Text>
+                  </View>
+                  <Text style={styles.featuredArtist} numberOfLines={1}>{featured.artist}</Text>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ScrollView
         horizontal
@@ -171,19 +217,19 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
   if (paintings.length === 0) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         {renderHeader()}
         <EmptyState
           icon="images-outline"
           title="No Paintings Found"
           message="Try adjusting your search or filters"
         />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <FlatList
         ListHeaderComponent={renderHeader}
         data={paintings}
@@ -201,86 +247,184 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={lightTheme.colors.primary} />
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
   },
-  header: {
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingHorizontal: 20,
+    paddingTop: 18,
   },
-  greeting: {
-    fontSize: 14,
-    color: '#757575',
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#212121',
+  brandText: {
+    fontSize: 18,
+    fontFamily: lightTheme.fonts.displaySemibold,
+    color: lightTheme.colors.text,
   },
   cartButton: {
     position: 'relative',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: lightTheme.colors.primary,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: lightTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: lightTheme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-    ...lightTheme.shadows.small,
   },
   cartBadge: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#E91E63',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    backgroundColor: lightTheme.colors.primary,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: lightTheme.colors.background,
   },
   cartBadgeText: {
     color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  categoriesContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    fontSize: 9,
+    fontFamily: lightTheme.fonts.bodyBold,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#212121',
+    fontFamily: lightTheme.fonts.displaySemibold,
+    color: lightTheme.colors.text,
   },
   resultCount: {
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textSecondary,
+  },
+  featuredSection: {
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  featuredCard: {
+    marginHorizontal: 20,
+    height: 220,
+    borderRadius: lightTheme.borderRadius.xl,
+    overflow: 'hidden',
+    backgroundColor: lightTheme.colors.surfaceAlt,
+  },
+  featuredImage: {
+    width: '100%',
+    height: '100%',
+  },
+  featuredHeart: {
+    position: 'absolute',
+    top: 14,
+    left: 14,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(30,27,22,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  featuredCategoryPill: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    backgroundColor: 'rgba(30,27,22,0.55)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: lightTheme.borderRadius.round,
+  },
+  featuredCategoryText: {
+    color: '#fff',
+    fontSize: 11,
+    fontFamily: lightTheme.fonts.bodySemibold,
+  },
+  featuredOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: 'rgba(20,18,14,0.55)',
+  },
+  featuredTitle: {
+    fontSize: 19,
+    fontFamily: lightTheme.fonts.display,
+    color: '#fff',
+    marginBottom: 8,
+  },
+  featuredMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  featuredPriceWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  featuredPrice: {
     fontSize: 14,
-    color: '#757575',
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.accent,
+  },
+  featuredArtistWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    maxWidth: '55%',
+  },
+  artistAvatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: lightTheme.colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  artistAvatarText: {
+    fontSize: 10,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#fff',
+  },
+  featuredArtist: {
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.bodyMedium,
+    color: '#fff',
+  },
+  categoriesContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
   },
   row: {
     justifyContent: 'space-between',

@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton } from '../components/common';
 import { lightTheme } from '../theme';
@@ -25,13 +26,13 @@ type Props = NativeStackScreenProps<any, 'Login'>;
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    // Validation
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -42,27 +43,17 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    console.log('🚀 Starting login for:', email);
     setLoading(true);
 
     try {
-      console.log('📡 Calling authService.login...');
       const response = await authService.login({ email, password });
-      console.log('📥 Login response:', response.success ? 'SUCCESS' : 'FAILED');
 
       if (response.success && response.data) {
         const { user, token } = response.data;
-        
-        console.log('💾 Storing auth data...');
-        // Store auth data
+
         await storeAuthData(token, user);
-        
-        console.log('🔄 Updating Redux state...');
-        // Update Redux state
         dispatch(setCredentials({ user, token }));
 
-        console.log('🧭 Navigating to:', user.role === 'admin' ? 'AdminDashboard' : 'MainTabs');
-        // Navigate based on role
         if (user.role === 'admin') {
           navigation.replace('AdminDashboard');
         } else {
@@ -70,7 +61,6 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
         }
       }
     } catch (error: any) {
-      console.error('❌ Login error:', error);
       Alert.alert(
         'Login Failed',
         error.message || 'Invalid email or password. Please try again.'
@@ -78,6 +68,11 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fillDemo = (role: 'customer' | 'admin') => {
+    setEmail(role === 'admin' ? 'admin@gmail.com' : 'customer@gmail.com');
+    setPassword('123456');
   };
 
   return (
@@ -88,30 +83,30 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <LinearGradient
           colors={[lightTheme.colors.gradient1, lightTheme.colors.gradient2]}
-          style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.header, { paddingTop: insets.top + 32 }]}
         >
-          <Ionicons name="color-palette" size={60} color="#fff" />
+          <View style={styles.logoCircle}>
+            <Ionicons name="color-palette" size={40} color="#fff" />
+          </View>
           <Text style={styles.headerTitle}>Shona Arts</Text>
-          <Text style={styles.headerSubtitle}>Welcome Back!</Text>
+          <Text style={styles.headerSubtitle}>Welcome back! Sign in to continue</Text>
         </LinearGradient>
 
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Login to Your Account</Text>
-
+        <View style={styles.formCard}>
           <View style={styles.inputContainer}>
-            <Ionicons
-              name="mail-outline"
-              size={20}
-              color="#757575"
-              style={styles.inputIcon}
-            />
+            <View style={styles.inputIconWrap}>
+              <Ionicons name="mail-outline" size={18} color={lightTheme.colors.primary} />
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Email Address"
-              placeholderTextColor="#BDBDBD"
+              placeholderTextColor={lightTheme.colors.textTertiary}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -121,26 +116,23 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color="#757575"
-              style={styles.inputIcon}
-            />
+            <View style={styles.inputIconWrap}>
+              <Ionicons name="lock-closed-outline" size={18} color={lightTheme.colors.primary} />
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor="#BDBDBD"
+              placeholderTextColor={lightTheme.colors.textTertiary}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color="#757575"
+                size={18}
+                color={lightTheme.colors.textTertiary}
               />
             </TouchableOpacity>
           </View>
@@ -169,9 +161,17 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
           {/* Demo Credentials */}
           <View style={styles.demoContainer}>
-            <Text style={styles.demoTitle}>Demo Credentials:</Text>
-            <Text style={styles.demoText}>Customer: customer@gmail.com / 123456</Text>
-            <Text style={styles.demoText}>Admin: admin@gmail.com / 123456</Text>
+            <Text style={styles.demoTitle}>Quick Demo Login</Text>
+            <View style={styles.demoButtons}>
+              <TouchableOpacity style={styles.demoChip} onPress={() => fillDemo('customer')}>
+                <Ionicons name="person-outline" size={14} color={lightTheme.colors.primary} />
+                <Text style={styles.demoChipText}>Customer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.demoChip} onPress={() => fillDemo('admin')}>
+                <Ionicons name="shield-checkmark-outline" size={14} color={lightTheme.colors.primary} />
+                <Text style={styles.demoChipText}>Admin</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -182,98 +182,129 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
   },
   scrollContent: {
     flexGrow: 1,
   },
   header: {
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 48,
     paddingHorizontal: 24,
     alignItems: 'center',
+    borderBottomLeftRadius: lightTheme.borderRadius.xxl,
+    borderBottomRightRadius: lightTheme.borderRadius.xxl,
+  },
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 28,
+    fontFamily: lightTheme.fonts.display,
     color: '#fff',
-    marginTop: 16,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
-    marginTop: 8,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 6,
+    fontFamily: lightTheme.fonts.bodyMedium,
   },
-  formContainer: {
+  formCard: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#212121',
-    marginBottom: 32,
+    marginTop: -28,
+    marginHorizontal: 20,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.xl,
+    padding: 24,
+    ...lightTheme.shadows.medium,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    backgroundColor: lightTheme.colors.surfaceAlt,
+    borderRadius: lightTheme.borderRadius.md,
+    paddingHorizontal: 14,
+    marginBottom: 14,
     height: 56,
   },
-  inputIcon: {
+  inputIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: lightTheme.colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#212121',
+    fontSize: 15,
+    color: lightTheme.colors.text,
   },
   loginButton: {
-    marginTop: 24,
+    marginTop: 10,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 22,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: lightTheme.colors.border,
   },
   dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: '#757575',
+    marginHorizontal: 14,
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.textTertiary,
   },
   signupText: {
     textAlign: 'center',
     fontSize: 14,
-    color: '#757575',
+    color: lightTheme.colors.textSecondary,
   },
   signupLink: {
     color: lightTheme.colors.primary,
-    fontWeight: '600',
+    fontFamily: lightTheme.fonts.bodyBold,
   },
   demoContainer: {
-    marginTop: 32,
+    marginTop: 28,
     padding: 16,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surfaceAlt,
+    borderRadius: lightTheme.borderRadius.md,
   },
   demoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#212121',
-    marginBottom: 8,
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.textSecondary,
+    marginBottom: 10,
   },
-  demoText: {
+  demoButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  demoChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: lightTheme.colors.surface,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: lightTheme.borderRadius.round,
+    gap: 6,
+    flex: 1,
+    ...lightTheme.shadows.small,
+  },
+  demoChipText: {
     fontSize: 12,
-    color: '#757575',
-    marginBottom: 4,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.primary,
   },
 });

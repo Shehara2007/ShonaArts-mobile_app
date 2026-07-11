@@ -13,7 +13,9 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size={size} color={lightTheme.colors.primary} />
+      <View style={styles.iconCircle}>
+        <ActivityIndicator size={size} color={lightTheme.colors.primary} />
+      </View>
       {message && <Text style={styles.message}>{message}</Text>}
     </View>
   );
@@ -24,11 +26,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
+  },
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: lightTheme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: lightTheme.colors.border,
   },
   message: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#757575',
+    marginTop: 18,
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.bodyMedium,
+    color: lightTheme.colors.textSecondary,
   },
 });

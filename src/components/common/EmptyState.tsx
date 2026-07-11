@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton } from './PrimaryButton';
+import { lightTheme } from '../../theme';
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -20,7 +21,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={80} color="#E0E0E0" />
+      <View style={styles.iconCircle}>
+        <Ionicons name={icon} size={48} color={lightTheme.colors.primary} />
+      </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
       {actionLabel && onAction && (
@@ -40,24 +43,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
+  },
+  iconCircle: {
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    backgroundColor: lightTheme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: lightTheme.colors.border,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#212121',
-    marginTop: 24,
+    fontSize: 19,
+    fontFamily: lightTheme.fonts.displaySemibold,
+    color: lightTheme.colors.text,
     marginBottom: 8,
     textAlign: 'center',
   },
   message: {
     fontSize: 14,
-    color: '#757575',
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
   button: {
-    marginTop: 24,
+    marginTop: 28,
     minWidth: 200,
   },
 });

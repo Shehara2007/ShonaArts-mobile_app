@@ -29,7 +29,7 @@ export const CartScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { items } = useAppSelector((state) => state.cart);
   const total = useAppSelector(selectCartTotal);
-  
+
   const [loading, setLoading] = useState(true);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
 
@@ -109,27 +109,34 @@ export const CartScreen: React.FC<Props> = ({ navigation }) => {
     return (
       <View style={styles.cartItem}>
         <Image source={{ uri: item.painting.image }} style={styles.itemImage} />
-        
+
         <View style={styles.itemDetails}>
-          <Text style={styles.itemTitle} numberOfLines={2}>
-            {item.painting.title}
-          </Text>
+          <View style={styles.itemTop}>
+            <Text style={styles.itemTitle} numberOfLines={2}>
+              {item.painting.title}
+            </Text>
+            <TouchableOpacity
+              style={styles.removeButton}
+              onPress={() => handleRemoveItem(item)}
+              hitSlop={6}
+            >
+              <Ionicons name="close" size={16} color={lightTheme.colors.textTertiary} />
+            </TouchableOpacity>
+          </View>
           <Text style={styles.itemArtist}>{item.painting.artist}</Text>
-          
+
           <View style={styles.itemFooter}>
-            <Text style={styles.itemPrice}>{formatCurrency(item.painting.price)}</Text>
-            
             <View style={styles.quantityContainer}>
               <TouchableOpacity
                 style={[styles.quantityButton, item.quantity === 1 && styles.quantityButtonDisabled]}
                 onPress={() => handleUpdateQuantity(item, item.quantity - 1)}
                 disabled={isUpdating || item.quantity === 1}
               >
-                <Ionicons name="remove" size={16} color={item.quantity === 1 ? '#BDBDBD' : '#212121'} />
+                <Ionicons name="remove" size={14} color={item.quantity === 1 ? lightTheme.colors.textTertiary : lightTheme.colors.text} />
               </TouchableOpacity>
-              
+
               <Text style={styles.quantityText}>{item.quantity}</Text>
-              
+
               <TouchableOpacity
                 style={[
                   styles.quantityButton,
@@ -140,22 +147,15 @@ export const CartScreen: React.FC<Props> = ({ navigation }) => {
               >
                 <Ionicons
                   name="add"
-                  size={16}
-                  color={item.quantity >= item.painting.stock ? '#BDBDBD' : '#212121'}
+                  size={14}
+                  color={item.quantity >= item.painting.stock ? lightTheme.colors.textTertiary : lightTheme.colors.text}
                 />
               </TouchableOpacity>
             </View>
-          </View>
-          
-          <Text style={styles.itemTotal}>{formatCurrency(itemTotal)}</Text>
-        </View>
 
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => handleRemoveItem(item)}
-        >
-          <Ionicons name="trash-outline" size={20} color="#F44336" />
-        </TouchableOpacity>
+            <Text style={styles.itemTotal}>{formatCurrency(itemTotal)}</Text>
+          </View>
+        </View>
       </View>
     );
   };
@@ -191,23 +191,24 @@ export const CartScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.summaryLabel}>Subtotal</Text>
               <Text style={styles.summaryValue}>{formatCurrency(total)}</Text>
             </View>
-            
+
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Shipping</Text>
-              <Text style={styles.summaryValue}>Free</Text>
+              <Text style={styles.summaryFree}>Free</Text>
             </View>
-            
+
             <View style={styles.divider} />
-            
+
             <View style={styles.summaryRow}>
               <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
             </View>
 
             <PrimaryButton
-              title={`Proceed to Checkout (${items.length} items)`}
+              title={`Proceed to Checkout (${items.length})`}
               onPress={handleCheckout}
               style={styles.checkoutButton}
+              icon={<Ionicons name="arrow-forward-circle" size={18} color="#fff" />}
             />
           </View>
         </>
@@ -219,118 +220,133 @@ export const CartScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
   },
   listContent: {
-    padding: 16,
+    padding: 20,
   },
   cartItem: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.lg,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 14,
     ...lightTheme.shadows.small,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
   },
   itemImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
+    width: 90,
+    height: 90,
+    borderRadius: lightTheme.borderRadius.md,
+    backgroundColor: lightTheme.colors.surfaceAlt,
   },
   itemDetails: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 14,
+    justifyContent: 'center',
+  },
+  itemTop: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   itemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#212121',
-    marginBottom: 4,
+    flex: 1,
+    fontSize: 15,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
+    marginRight: 8,
+  },
+  removeButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surfaceAlt,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   itemArtist: {
-    fontSize: 13,
-    color: '#757575',
+    fontSize: 12,
+    color: lightTheme.colors.textSecondary,
+    marginTop: 2,
   },
   itemFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
-  },
-  itemPrice: {
-    fontSize: 14,
-    color: '#757575',
+    marginTop: 12,
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: lightTheme.colors.surfaceAlt,
+    borderRadius: lightTheme.borderRadius.round,
+    padding: 3,
   },
   quantityButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#F5F5F5',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityButtonDisabled: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: 'transparent',
   },
   quantityText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#212121',
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
     marginHorizontal: 12,
-    minWidth: 20,
+    minWidth: 14,
     textAlign: 'center',
   },
   itemTotal: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
-    marginTop: 4,
-  },
-  removeButton: {
-    padding: 8,
   },
   footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#fff',
+    padding: 20,
+    paddingBottom: 28,
+    backgroundColor: lightTheme.colors.surface,
+    borderTopLeftRadius: lightTheme.borderRadius.xl,
+    borderTopRightRadius: lightTheme.borderRadius.xl,
+    ...lightTheme.shadows.medium,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   summaryLabel: {
-    fontSize: 15,
-    color: '#757575',
+    fontSize: 14,
+    color: lightTheme.colors.textSecondary,
   },
   summaryValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#212121',
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.text,
+  },
+  summaryFree: {
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.success,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
-    marginVertical: 12,
+    backgroundColor: lightTheme.colors.border,
+    marginVertical: 10,
   },
   totalLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#212121',
+    fontSize: 16,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
   },
   totalValue: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
   },
   checkoutButton: {

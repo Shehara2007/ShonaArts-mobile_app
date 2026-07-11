@@ -17,7 +17,7 @@ import type { Order, Painting } from '../../types';
 
 type Props = NativeStackScreenProps<any, 'AdminAnalytics'>;
 
-const CATEGORY_COLORS = ['#6200EE', '#03DAC6', '#FF6D00', '#00BFA5', '#E91E63', '#3F51B5'];
+const CATEGORY_COLORS = ['#C0954C', '#8C6A3F', '#5C7A52', '#B0562D', '#7A6A8C', '#3F5E7A'];
 
 export const AdminAnalyticsScreen: React.FC<Props> = ({ navigation }) => {
   const [paintings, setPaintings] = useState<Painting[]>([]);
@@ -130,7 +130,7 @@ export const AdminAnalyticsScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.summaryValue}>{formatCurrency(totalRevenue)}</Text>
             <Text style={styles.summaryLabel}>Total Revenue</Text>
           </View>
-          <View style={[styles.summaryCard, { backgroundColor: '#00BFA5' }]}>
+          <View style={[styles.summaryCard, { backgroundColor: '#5C7A52' }]}>
             <Text style={styles.summaryValue}>{formatCurrency(Math.round(avgOrderValue))}</Text>
             <Text style={styles.summaryLabel}>Avg. Order Value</Text>
           </View>
@@ -222,7 +222,7 @@ export const AdminAnalyticsScreen: React.FC<Props> = ({ navigation }) => {
                 <Text
                   style={[
                     styles.listRowValue,
-                    { color: p.stock === 0 ? '#F44336' : lightTheme.colors.warning },
+                    { color: p.stock === 0 ? '#C0503F' : lightTheme.colors.warning },
                   ]}
                 >
                   {p.stock} left
@@ -239,7 +239,7 @@ export const AdminAnalyticsScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F6F1E7',
   },
   content: {
     padding: 16,
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: lightTheme.fonts.bodyBold,
     color: '#fff',
   },
   summaryLabel: {
@@ -268,13 +268,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#212121',
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#18181B',
     marginBottom: 10,
   },
   panel: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: lightTheme.borderRadius.lg,
     padding: 16,
     marginBottom: 24,
     ...lightTheme.shadows.small,
@@ -288,13 +288,13 @@ const styles = StyleSheet.create({
     width: 84,
     fontSize: 12,
     color: '#616161',
-    fontWeight: '600',
+    fontFamily: lightTheme.fonts.bodySemibold,
   },
   barTrack: {
     flex: 1,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EEEDF5',
     marginHorizontal: 10,
     overflow: 'hidden',
   },
@@ -305,8 +305,8 @@ const styles = StyleSheet.create({
   barValue: {
     width: 28,
     fontSize: 12,
-    fontWeight: '700',
-    color: '#212121',
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#18181B',
     textAlign: 'right',
   },
   listRow: {
@@ -317,14 +317,14 @@ const styles = StyleSheet.create({
   rankBadge: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: lightTheme.borderRadius.lg,
     backgroundColor: `${lightTheme.colors.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
   },
   rankText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
   },
   listRowContent: {
@@ -333,22 +333,22 @@ const styles = StyleSheet.create({
   },
   listRowTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#212121',
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: '#18181B',
   },
   listRowSubtitle: {
     fontSize: 12,
-    color: '#9E9E9E',
+    color: '#A1A1AA',
     marginTop: 1,
   },
   listRowValue: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
   },
   emptyText: {
     fontSize: 13,
-    color: '#9E9E9E',
+    color: '#A1A1AA',
     textAlign: 'center',
     paddingVertical: 8,
   },

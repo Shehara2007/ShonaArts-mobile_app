@@ -33,7 +33,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-image-picker"
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Shona Arts to access your photos so you can upload painting images.",
+          "cameraPermission": "Allow Shona Arts to access your camera so you can photograph paintings."
+        }
+      ]
     ]
   }
 }

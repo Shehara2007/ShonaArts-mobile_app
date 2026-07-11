@@ -8,6 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingSpinner, EmptyState } from '../components/common';
 import { lightTheme } from '../theme';
 import { formatCurrency, formatDateTime, getOrderStatusColor } from '../utils/helpers';
@@ -19,7 +20,7 @@ import type { Order } from '../types';
 export const OrdersScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const { orders } = useAppSelector((state) => state.order);
-  
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -64,15 +65,18 @@ export const OrdersScreen: React.FC = () => {
     const statusColor = getOrderStatusColor(item.status);
 
     return (
-      <TouchableOpacity style={styles.orderItem} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.orderItem} activeOpacity={0.85}>
         <View style={styles.orderHeader}>
-          <View>
+          <View style={styles.orderIconWrap}>
+            <Ionicons name="receipt" size={18} color={lightTheme.colors.primary} />
+          </View>
+          <View style={styles.orderHeaderText}>
             <Text style={styles.orderId}>Order #{item.id}</Text>
             <Text style={styles.orderDate}>{formatDateTime(item.date)}</Text>
           </View>
-          
-          <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
-            <Ionicons name={getStatusIcon(item.status)} size={16} color={statusColor} />
+
+          <View style={[styles.statusBadge, { backgroundColor: `${statusColor}18` }]}>
+            <Ionicons name={getStatusIcon(item.status)} size={13} color={statusColor} />
             <Text style={[styles.statusText, { color: statusColor }]}>
               {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
             </Text>
@@ -83,12 +87,12 @@ export const OrdersScreen: React.FC = () => {
 
         <View style={styles.orderDetails}>
           <View style={styles.detailRow}>
-            <Ionicons name="cube-outline" size={18} color="#757575" />
+            <Ionicons name="cube-outline" size={15} color={lightTheme.colors.textSecondary} />
             <Text style={styles.detailText}>{item.items.length} items</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Ionicons name="location-outline" size={18} color="#757575" />
+            <Ionicons name="location-outline" size={15} color={lightTheme.colors.textSecondary} />
             <Text style={styles.detailText} numberOfLines={1}>
               {item.shippingAddress}
             </Text>
@@ -97,8 +101,8 @@ export const OrdersScreen: React.FC = () => {
           <View style={styles.detailRow}>
             <Ionicons
               name={item.paymentMethod === 'cod' ? 'cash-outline' : 'card-outline'}
-              size={18}
-              color="#757575"
+              size={15}
+              color={lightTheme.colors.textSecondary}
             />
             <Text style={styles.detailText}>
               {item.paymentMethod === 'cod' ? 'Cash on Delivery' : 'PayHere'}
@@ -122,7 +126,7 @@ export const OrdersScreen: React.FC = () => {
 
   if (orders.length === 0) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>My Orders</Text>
         </View>
@@ -130,18 +134,18 @@ export const OrdersScreen: React.FC = () => {
           icon="receipt-outline"
           title="No Orders Yet"
           message="You haven't placed any orders yet"
-          actionLabel="Start Shopping"
-          onAction={() => {}}
         />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Orders</Text>
-        <Text style={styles.orderCount}>{orders.length} orders</Text>
+        <View style={styles.countBadge}>
+          <Text style={styles.countBadgeText}>{orders.length}</Text>
+        </View>
       </View>
 
       <FlatList
@@ -154,88 +158,108 @@ export const OrdersScreen: React.FC = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    gap: 10,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#212121',
+    fontSize: 26,
+    fontFamily: lightTheme.fonts.display,
+    color: lightTheme.colors.text,
   },
-  orderCount: {
-    fontSize: 14,
-    color: '#757575',
+  countBadge: {
+    backgroundColor: lightTheme.colors.primaryLight,
+    borderRadius: lightTheme.borderRadius.round,
+    minWidth: 26,
+    height: 26,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  countBadgeText: {
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.primary,
   },
   listContent: {
-    padding: 16,
+    padding: 20,
+    paddingTop: 0,
+    paddingBottom: 120,
   },
   orderItem: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.lg,
     padding: 16,
-    marginBottom: 12,
-    ...lightTheme.shadows.medium,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    marginBottom: 14,
+    ...lightTheme.shadows.small,
   },
   orderHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+  },
+  orderIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: lightTheme.colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  orderHeaderText: {
+    flex: 1,
   },
   orderId: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#212121',
-    marginBottom: 4,
+    fontSize: 15,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
   },
   orderDate: {
-    fontSize: 13,
-    color: '#757575',
+    fontSize: 12,
+    color: lightTheme.colors.textSecondary,
+    marginTop: 1,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: lightTheme.borderRadius.round,
+    gap: 4,
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 6,
+    fontSize: 11,
+    fontFamily: lightTheme.fonts.bodyBold,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: lightTheme.colors.border,
     marginVertical: 12,
   },
   orderDetails: {
-    gap: 8,
+    gap: 9,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   detailText: {
-    fontSize: 14,
-    color: '#616161',
-    marginLeft: 12,
+    fontSize: 13,
+    color: lightTheme.colors.textSecondary,
+    marginLeft: 10,
     flex: 1,
   },
   orderFooter: {
@@ -244,12 +268,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   totalLabel: {
-    fontSize: 14,
-    color: '#757575',
+    fontSize: 13,
+    color: lightTheme.colors.textSecondary,
   },
   totalValue: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
   },
 });

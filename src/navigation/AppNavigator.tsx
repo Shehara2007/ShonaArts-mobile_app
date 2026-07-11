@@ -1,4 +1,6 @@
 import React from 'react';
+import { View, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,63 +31,60 @@ import { AdminAnalyticsScreen } from '../screens/admin/AdminAnalyticsScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+const TAB_ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
+  Home: { active: 'home', inactive: 'home-outline' },
+  Wishlist: { active: 'compass', inactive: 'compass-outline' },
+  Orders: { active: 'bar-chart', inactive: 'bar-chart-outline' },
+  Profile: { active: 'person', inactive: 'person-outline' },
+};
+
 const MainTabs = () => {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarActiveTintColor: lightTheme.colors.primary,
-        tabBarInactiveTintColor: '#9E9E9E',
+        tabBarInactiveTintColor: lightTheme.colors.textTertiary,
         tabBarStyle: {
-          backgroundColor: '#fff',
+          height: 60 + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, 10),
+          paddingTop: 12,
+          backgroundColor: lightTheme.colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#E0E0E0',
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          borderTopColor: lightTheme.colors.border,
+          elevation: 0,
+          shadowOpacity: 0,
         },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
+        tabBarIcon: ({ focused, color }) => {
+          const icons = TAB_ICONS[route.name];
+          return (
+            <View style={{ alignItems: 'center', justifyContent: 'center', width: 44 }}>
+              <Ionicons
+                name={focused ? icons.active : icons.inactive}
+                size={22}
+                color={color}
+              />
+              <View
+                style={{
+                  marginTop: 8,
+                  width: 18,
+                  height: 3,
+                  borderRadius: 2,
+                  backgroundColor: focused ? lightTheme.colors.primary : 'transparent',
+                }}
+              />
+            </View>
+          );
         },
-      }}
+      })}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Wishlist"
-        component={WishlistScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="heart" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Orders"
-        component={OrdersScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="receipt" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Wishlist" component={WishlistScreen} />
+      <Tab.Screen name="Orders" component={OrdersScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 };

@@ -6,3 +6,4 @@ export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { Header } from './Header';
 export { CategoryChip } from './CategoryChip';
+export { ImagePickerField } from './ImagePickerField';

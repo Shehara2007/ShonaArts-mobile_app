@@ -17,7 +17,7 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
     <TouchableOpacity
       style={[styles.chip, selected && styles.selectedChip]}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.75}
     >
       <Text style={[styles.label, selected && styles.selectedLabel]}>
         {label}
@@ -28,22 +28,22 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    marginRight: 12,
+    borderRadius: lightTheme.borderRadius.round,
+    backgroundColor: lightTheme.colors.surface,
+    marginRight: 10,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: lightTheme.colors.border,
   },
   selectedChip: {
     backgroundColor: lightTheme.colors.primary,
     borderColor: lightTheme.colors.primary,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#757575',
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.textSecondary,
   },
   selectedLabel: {
     color: '#fff',

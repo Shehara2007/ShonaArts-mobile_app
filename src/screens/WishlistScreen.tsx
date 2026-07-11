@@ -9,7 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PrimaryButton, LoadingSpinner, EmptyState } from '../components/common';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LoadingSpinner, EmptyState } from '../components/common';
 import { lightTheme } from '../theme';
 import { formatCurrency } from '../utils/helpers';
 import { wishlistService, cartService } from '../api/services';
@@ -21,7 +22,7 @@ import type { WishlistItem } from '../types';
 export const WishlistScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const { items, loading } = useAppSelector((state) => state.wishlist);
-  
+
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -70,16 +71,11 @@ export const WishlistScreen: React.FC = () => {
     setLoadingItems((prev) => new Set(prev).add(item.id));
 
     try {
-      // Add to cart
       const cartResponse = await cartService.add(item.painting.id, 1);
       if (cartResponse.success) {
         dispatch(addToCart(cartResponse.data));
-        
-        // Remove from wishlist
         await wishlistService.remove(item.id);
         dispatch(removeFromWishlist(item.id));
-        
-        Alert.alert('Success', 'Moved to cart!');
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to move to cart');
@@ -98,18 +94,27 @@ export const WishlistScreen: React.FC = () => {
     return (
       <View style={styles.wishlistItem}>
         <Image source={{ uri: item.painting.image }} style={styles.itemImage} />
-        
+
         <View style={styles.itemDetails}>
-          <Text style={styles.itemTitle} numberOfLines={2}>
-            {item.painting.title}
-          </Text>
+          <View style={styles.itemTop}>
+            <Text style={styles.itemTitle} numberOfLines={2}>
+              {item.painting.title}
+            </Text>
+            <TouchableOpacity
+              style={styles.removeButton}
+              onPress={() => handleRemoveFromWishlist(item)}
+              hitSlop={6}
+            >
+              <Ionicons name="close" size={16} color={lightTheme.colors.textTertiary} />
+            </TouchableOpacity>
+          </View>
           <Text style={styles.itemArtist}>{item.painting.artist}</Text>
-          
+
           <View style={styles.itemFooter}>
             <Text style={styles.itemPrice}>{formatCurrency(item.painting.price)}</Text>
-            
+
             <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={14} color="#FFB800" />
+              <Ionicons name="star" size={12} color="#C0954C" />
               <Text style={styles.rating}>{item.painting.rating}</Text>
             </View>
           </View>
@@ -120,35 +125,27 @@ export const WishlistScreen: React.FC = () => {
             </View>
           )}
 
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleMoveToCart(item)}
-              disabled={isLoading || item.painting.stock === 0}
+          <TouchableOpacity
+            style={[styles.moveButton, item.painting.stock === 0 && styles.moveButtonDisabled]}
+            onPress={() => handleMoveToCart(item)}
+            disabled={isLoading || item.painting.stock === 0}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="cart-outline"
+              size={15}
+              color={item.painting.stock === 0 ? lightTheme.colors.textTertiary : '#fff'}
+            />
+            <Text
+              style={[
+                styles.moveButtonText,
+                item.painting.stock === 0 && styles.moveButtonTextDisabled,
+              ]}
             >
-              <Ionicons
-                name="cart-outline"
-                size={18}
-                color={item.painting.stock === 0 ? '#BDBDBD' : lightTheme.colors.primary}
-              />
-              <Text
-                style={[
-                  styles.actionText,
-                  item.painting.stock === 0 && styles.actionTextDisabled,
-                ]}
-              >
-                {isLoading ? 'Moving...' : 'Move to Cart'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+              {isLoading ? 'Moving...' : 'Move to Cart'}
+            </Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => handleRemoveFromWishlist(item)}
-        >
-          <Ionicons name="close-circle" size={24} color="#F44336" />
-        </TouchableOpacity>
       </View>
     );
   };
@@ -159,23 +156,26 @@ export const WishlistScreen: React.FC = () => {
 
   if (items.length === 0) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>My Wishlist</Text>
+        </View>
         <EmptyState
           icon="heart-outline"
           title="Your Wishlist is Empty"
           message="Add paintings you love to your wishlist"
-          actionLabel="Browse Paintings"
-          onAction={() => {}}
         />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Wishlist</Text>
-        <Text style={styles.itemCount}>{items.length} items</Text>
+        <View style={styles.countBadge}>
+          <Text style={styles.countBadgeText}>{items.length}</Text>
+        </View>
       </View>
 
       <FlatList
@@ -185,66 +185,90 @@ export const WishlistScreen: React.FC = () => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    gap: 10,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#212121',
+    fontSize: 26,
+    fontFamily: lightTheme.fonts.display,
+    color: lightTheme.colors.text,
   },
-  itemCount: {
-    fontSize: 14,
-    color: '#757575',
+  countBadge: {
+    backgroundColor: lightTheme.colors.primaryLight,
+    borderRadius: lightTheme.borderRadius.round,
+    minWidth: 26,
+    height: 26,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  countBadgeText: {
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.primary,
   },
   listContent: {
-    padding: 16,
+    padding: 20,
+    paddingTop: 0,
+    paddingBottom: 120,
   },
   wishlistItem: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.lg,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 14,
     ...lightTheme.shadows.small,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
   },
   itemImage: {
-    width: 100,
+    width: 96,
     height: 120,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
+    borderRadius: lightTheme.borderRadius.md,
+    backgroundColor: lightTheme.colors.surfaceAlt,
   },
   itemDetails: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 14,
+    justifyContent: 'center',
+  },
+  itemTop: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   itemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#212121',
-    marginBottom: 4,
+    flex: 1,
+    fontSize: 15,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
+    marginRight: 8,
+  },
+  removeButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surfaceAlt,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   itemArtist: {
-    fontSize: 13,
-    color: '#757575',
+    fontSize: 12,
+    color: lightTheme.colors.textSecondary,
+    marginTop: 2,
   },
   itemFooter: {
     flexDirection: 'row',
@@ -254,51 +278,55 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: lightTheme.colors.warningLight,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: lightTheme.borderRadius.round,
   },
   rating: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#212121',
-    marginLeft: 4,
+    fontSize: 11,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
+    marginLeft: 3,
   },
   outOfStockBadge: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: lightTheme.colors.errorLight,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    paddingVertical: 3,
+    borderRadius: lightTheme.borderRadius.sm,
     alignSelf: 'flex-start',
     marginTop: 8,
   },
   outOfStockText: {
-    fontSize: 11,
-    color: '#C62828',
-    fontWeight: '600',
+    fontSize: 10,
+    color: lightTheme.colors.error,
+    fontFamily: lightTheme.fonts.bodyBold,
   },
-  actions: {
-    flexDirection: 'row',
-    marginTop: 12,
-  },
-  actionButton: {
+  moveButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'center',
+    backgroundColor: lightTheme.colors.primary,
+    paddingVertical: 9,
+    borderRadius: lightTheme.borderRadius.round,
+    marginTop: 10,
+    gap: 6,
   },
-  actionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: lightTheme.colors.primary,
-    marginLeft: 6,
+  moveButtonDisabled: {
+    backgroundColor: lightTheme.colors.surfaceAlt,
   },
-  actionTextDisabled: {
-    color: '#BDBDBD',
+  moveButtonText: {
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#fff',
   },
-  removeButton: {
-    padding: 4,
+  moveButtonTextDisabled: {
+    color: lightTheme.colors.textTertiary,
   },
 });

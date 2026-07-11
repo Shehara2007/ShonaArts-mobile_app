@@ -145,12 +145,12 @@ export const AdminUsersScreen: React.FC<Props> = ({ navigation }) => {
             <Ionicons
               name={item.role === 'admin' ? 'shield-checkmark' : 'person'}
               size={12}
-              color={item.role === 'admin' ? '#6200EE' : '#757575'}
+              color={item.role === 'admin' ? '#C0954C' : '#8F8776'}
             />
             <Text
               style={[
                 styles.roleText,
-                { color: item.role === 'admin' ? '#6200EE' : '#757575' },
+                { color: item.role === 'admin' ? '#C0954C' : '#8F8776' },
               ]}
             >
               {item.role}
@@ -164,7 +164,7 @@ export const AdminUsersScreen: React.FC<Props> = ({ navigation }) => {
             <Ionicons
               name="trash-outline"
               size={16}
-              color={isSelf ? '#E0E0E0' : '#F44336'}
+              color={isSelf ? '#EEEDF5' : '#C0503F'}
             />
           </TouchableOpacity>
         </View>
@@ -220,7 +220,7 @@ export const AdminUsersScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F6F1E7',
   },
   listContent: {
     padding: 16,
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: lightTheme.borderRadius.lg,
     padding: 12,
     marginBottom: 12,
     ...lightTheme.shadows.small,
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EEEDF5',
   },
   cardContent: {
     flex: 1,
@@ -250,14 +250,14 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#212121',
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#18181B',
   },
   youBadge: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#4CAF50',
-    backgroundColor: '#4CAF5020',
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#5C7A52',
+    backgroundColor: '#5C7A5220',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -266,12 +266,12 @@ const styles = StyleSheet.create({
   },
   email: {
     fontSize: 13,
-    color: '#757575',
+    color: '#71717A',
     marginTop: 2,
   },
   phone: {
     fontSize: 12,
-    color: '#9E9E9E',
+    color: '#A1A1AA',
     marginTop: 2,
   },
   actions: {
@@ -283,18 +283,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: lightTheme.borderRadius.lg,
     gap: 4,
   },
   adminBadge: {
-    backgroundColor: '#6200EE15',
+    backgroundColor: '#C0954C18',
   },
   customerBadge: {
-    backgroundColor: '#75757515',
+    backgroundColor: '#71717A15',
   },
   roleText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: lightTheme.fonts.bodyBold,
     textTransform: 'capitalize',
   },
   deleteButton: {

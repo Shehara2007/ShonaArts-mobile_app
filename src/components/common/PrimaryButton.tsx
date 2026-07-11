@@ -7,7 +7,6 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { lightTheme } from '../../theme';
 
 interface PrimaryButtonProps {
@@ -17,7 +16,8 @@ interface PrimaryButtonProps {
   disabled?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
-  variant?: 'gradient' | 'solid' | 'outline';
+  variant?: 'gradient' | 'solid' | 'outline' | 'ghost';
+  icon?: React.ReactNode;
 }
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -28,59 +28,57 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   style,
   textStyle,
   variant = 'gradient',
+  icon,
 }) => {
   const isDisabled = disabled || loading;
-
-  if (variant === 'gradient') {
-    return (
-      <TouchableOpacity
-        onPress={onPress}
-        disabled={isDisabled}
-        activeOpacity={0.8}
-        style={[styles.container, style]}
-      >
-        <LinearGradient
-          colors={
-            isDisabled
-              ? ['#BDBDBD', '#9E9E9E']
-              : [lightTheme.colors.gradient1, lightTheme.colors.gradient2]
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradient}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={[styles.text, textStyle]}>{title}</Text>
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  }
 
   if (variant === 'outline') {
     return (
       <TouchableOpacity
         onPress={onPress}
         disabled={isDisabled}
-        activeOpacity={0.8}
-        style={[styles.container, styles.outlineContainer, style]}
+        activeOpacity={0.7}
+        style={[styles.container, styles.outlineContainer, isDisabled && styles.outlineDisabled, style]}
       >
         {loading ? (
           <ActivityIndicator color={lightTheme.colors.primary} />
         ) : (
-          <Text style={[styles.text, styles.outlineText, textStyle]}>{title}</Text>
+          <>
+            {icon}
+            <Text style={[styles.text, styles.outlineText, textStyle]}>{title}</Text>
+          </>
         )}
       </TouchableOpacity>
     );
   }
 
+  if (variant === 'ghost') {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={isDisabled}
+        activeOpacity={0.6}
+        style={[styles.container, styles.ghostContainer, style]}
+      >
+        {loading ? (
+          <ActivityIndicator color={lightTheme.colors.primary} />
+        ) : (
+          <>
+            {icon}
+            <Text style={[styles.text, styles.outlineText, textStyle]}>{title}</Text>
+          </>
+        )}
+      </TouchableOpacity>
+    );
+  }
+
+  // 'gradient' and 'solid' both render as the same solid near-black button
+  // to match the reference design's dark CTA style.
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
       style={[
         styles.container,
         styles.solidContainer,
@@ -91,7 +89,10 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       {loading ? (
         <ActivityIndicator color="#fff" />
       ) : (
-        <Text style={[styles.text, textStyle]}>{title}</Text>
+        <>
+          {icon}
+          <Text style={[styles.text, textStyle]}>{title}</Text>
+        </>
       )}
     </TouchableOpacity>
   );
@@ -99,42 +100,50 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
+    borderRadius: lightTheme.borderRadius.md,
     overflow: 'hidden',
-    ...lightTheme.shadows.small,
-  },
-  gradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
   },
   solidContainer: {
+    flexDirection: 'row',
     backgroundColor: lightTheme.colors.primary,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
+    gap: 8,
+  },
+  outlineContainer: {
+    flexDirection: 'row',
+    backgroundColor: lightTheme.colors.primaryLight,
     paddingVertical: 16,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 56,
+    gap: 8,
   },
-  outlineContainer: {
+  outlineDisabled: {
+    backgroundColor: lightTheme.colors.surfaceAlt,
+  },
+  ghostContainer: {
+    flexDirection: 'row',
     backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: lightTheme.colors.primary,
     paddingVertical: 14,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 48,
+    gap: 8,
   },
   disabledContainer: {
-    backgroundColor: '#BDBDBD',
+    backgroundColor: lightTheme.colors.textTertiary,
   },
   text: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: lightTheme.fonts.bodyBold,
+    letterSpacing: 0.2,
   },
   outlineText: {
     color: lightTheme.colors.primary,

@@ -140,15 +140,15 @@ export const AdminOrdersScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.divider} />
 
         <View style={styles.detailRow}>
-          <Ionicons name="person-outline" size={16} color="#757575" />
+          <Ionicons name="person-outline" size={16} color="#71717A" />
           <Text style={styles.detailText}>Customer #{item.userId}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Ionicons name="cube-outline" size={16} color="#757575" />
+          <Ionicons name="cube-outline" size={16} color="#71717A" />
           <Text style={styles.detailText}>{item.items.length} item(s)</Text>
         </View>
         <View style={styles.detailRow}>
-          <Ionicons name="location-outline" size={16} color="#757575" />
+          <Ionicons name="location-outline" size={16} color="#71717A" />
           <Text style={styles.detailText} numberOfLines={1}>{item.shippingAddress}</Text>
         </View>
 
@@ -239,7 +239,7 @@ export const AdminOrdersScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F6F1E7',
   },
   filterRow: {
     paddingHorizontal: 16,
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: lightTheme.borderRadius.lg,
     padding: 16,
     marginBottom: 12,
     ...lightTheme.shadows.small,
@@ -263,26 +263,26 @@ const styles = StyleSheet.create({
   },
   orderId: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#212121',
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#18181B',
   },
   orderDate: {
     fontSize: 12,
-    color: '#9E9E9E',
+    color: '#A1A1AA',
     marginTop: 2,
   },
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: lightTheme.borderRadius.lg,
   },
   statusText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: lightTheme.fonts.bodyBold,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EEEDF5',
     marginVertical: 10,
   },
   detailRow: {
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   total: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
   },
   footerActions: {
@@ -319,14 +319,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statusButton: {
-    backgroundColor: '#03A9F4',
+    backgroundColor: '#C0954C',
   },
   deleteButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: '#C0503F',
   },
   actionButtonText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: lightTheme.fonts.bodySemibold,
   },
 });

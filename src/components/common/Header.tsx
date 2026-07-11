@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { lightTheme } from '../../theme';
 
@@ -26,10 +27,12 @@ export const Header: React.FC<HeaderProps> = ({
   cartCount = 0,
   onCartPress,
 }) => {
+  const insets = useSafeAreaInsets();
+
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={lightTheme.colors.primary} />
-      <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={lightTheme.colors.background} />
+      <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
         <View style={styles.leftContainer}>
           {onBackPress && (
             <TouchableOpacity
@@ -37,22 +40,23 @@ export const Header: React.FC<HeaderProps> = ({
               style={styles.iconButton}
               activeOpacity={0.7}
             >
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="arrow-back" size={19} color={lightTheme.colors.text} />
             </TouchableOpacity>
           )}
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
         </View>
+
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
 
         <View style={styles.rightContainer}>
           {showCart && onCartPress && (
             <TouchableOpacity
               onPress={onCartPress}
-              style={styles.cartButton}
+              style={styles.iconButton}
               activeOpacity={0.7}
             >
-              <Ionicons name="cart-outline" size={24} color="#fff" />
+              <Ionicons name="cart-outline" size={19} color={lightTheme.colors.text} />
               {cartCount > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>
@@ -71,53 +75,55 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: lightTheme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
-    ...lightTheme.shadows.small,
+    backgroundColor: lightTheme.colors.background,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
   },
   leftContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    marginRight: 16,
-    padding: 4,
+    width: 40,
+    alignItems: 'flex-start',
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
     flex: 1,
+    fontSize: 17,
+    fontFamily: lightTheme.fonts.displaySemibold,
+    color: lightTheme.colors.text,
+    textAlign: 'center',
   },
   rightContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: 40,
+    alignItems: 'flex-end',
   },
-  cartButton: {
+  iconButton: {
     position: 'relative',
-    padding: 4,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: lightTheme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...lightTheme.shadows.small,
   },
   badge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#E91E63',
+    top: -4,
+    right: -4,
+    backgroundColor: lightTheme.colors.primary,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: lightTheme.colors.background,
   },
   badgeText: {
     color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontFamily: lightTheme.fonts.bodyBold,
   },
 });

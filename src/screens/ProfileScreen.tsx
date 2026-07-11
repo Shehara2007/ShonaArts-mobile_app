@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { lightTheme } from '../theme';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
@@ -20,6 +21,7 @@ type Props = NativeStackScreenProps<any, 'Profile'>;
 export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const insets = useSafeAreaInsets();
 
   const handleLogout = () => {
     Alert.alert(
@@ -43,13 +45,17 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     );
   };
 
-  const menuItems = [
+  const menuItems: Array<{
+    icon: keyof typeof Ionicons.glyphMap;
+    title: string;
+    subtitle: string;
+    onPress: () => void;
+  }> = [
     {
       icon: 'person-outline',
       title: 'Edit Profile',
       subtitle: 'Update your personal information',
       onPress: () => {
-        // Navigate to edit profile screen
         Alert.alert('Coming Soon', 'Edit profile feature will be available soon');
       },
     },
@@ -100,35 +106,39 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Profile Header */}
-      <View style={styles.profileHeader}>
+      <View style={[styles.profileHeader, { paddingTop: insets.top + 24 }]}>
         <View style={styles.avatarContainer}>
           {user?.avatar ? (
             <Image source={{ uri: user.avatar }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={40} color="#fff" />
+              <Ionicons name="person" size={34} color="#fff" />
             </View>
           )}
-          <TouchableOpacity style={styles.editAvatarButton}>
-            <Ionicons name="camera" size={16} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.editAvatarButton}>
+            <Ionicons name="camera" size={12} color={lightTheme.colors.text} />
+          </View>
         </View>
 
         <Text style={styles.userName}>{user?.name}</Text>
         <Text style={styles.userEmail}>{user?.email}</Text>
+      </View>
 
-        <View style={styles.userInfoCard}>
-          <View style={styles.infoItem}>
-            <Ionicons name="call-outline" size={18} color="#757575" />
-            <Text style={styles.infoText}>{user?.phone}</Text>
+      <View style={styles.userInfoCard}>
+        <View style={styles.infoItem}>
+          <View style={styles.infoIconWrap}>
+            <Ionicons name="call-outline" size={15} color={lightTheme.colors.accent} />
           </View>
-          <View style={styles.infoItem}>
-            <Ionicons name="location-outline" size={18} color="#757575" />
-            <Text style={styles.infoText} numberOfLines={2}>
-              {user?.address}
-            </Text>
+          <Text style={styles.infoText}>{user?.phone}</Text>
+        </View>
+        <View style={styles.infoDivider} />
+        <View style={styles.infoItem}>
+          <View style={styles.infoIconWrap}>
+            <Ionicons name="location-outline" size={15} color={lightTheme.colors.accent} />
           </View>
+          <Text style={styles.infoText} numberOfLines={2}>
+            {user?.address}
+          </Text>
         </View>
       </View>
 
@@ -137,18 +147,21 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         {menuItems.map((item, index) => (
           <TouchableOpacity
             key={index}
-            style={styles.menuItem}
+            style={[
+              styles.menuItem,
+              index === menuItems.length - 1 && styles.menuItemLast,
+            ]}
             onPress={item.onPress}
             activeOpacity={0.7}
           >
             <View style={styles.menuIconContainer}>
-              <Ionicons name={item.icon as any} size={24} color={lightTheme.colors.primary} />
+              <Ionicons name={item.icon} size={19} color={lightTheme.colors.text} />
             </View>
             <View style={styles.menuContent}>
               <Text style={styles.menuTitle}>{item.title}</Text>
               <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#BDBDBD" />
+            <Ionicons name="chevron-forward" size={17} color={lightTheme.colors.textTertiary} />
           </TouchableOpacity>
         ))}
       </View>
@@ -157,9 +170,9 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={handleLogout}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
       >
-        <Ionicons name="log-out-outline" size={24} color="#F44336" />
+        <Ionicons name="log-out-outline" size={19} color={lightTheme.colors.error} />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
 
@@ -171,31 +184,32 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: lightTheme.colors.background,
   },
   profileHeader: {
-    backgroundColor: '#fff',
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 16,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    ...lightTheme.shadows.small,
+    backgroundColor: lightTheme.colors.primary,
+    paddingBottom: 44,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: lightTheme.borderRadius.xxl,
+    borderBottomRightRadius: lightTheme.borderRadius.xxl,
   },
   avatarContainer: {
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: lightTheme.colors.primary,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: 'rgba(255,255,255,0.14)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -203,103 +217,122 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: lightTheme.colors.primary,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
+    borderWidth: 2,
+    borderColor: lightTheme.colors.primary,
   },
   userName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#212121',
-    marginBottom: 4,
+    fontSize: 20,
+    fontFamily: lightTheme.fonts.display,
+    color: '#fff',
+    marginBottom: 3,
   },
   userEmail: {
-    fontSize: 14,
-    color: '#757575',
-    marginBottom: 16,
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.body,
+    color: 'rgba(255,255,255,0.65)',
   },
   userInfoCard: {
-    width: '100%',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    marginTop: -24,
+    marginHorizontal: 20,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.lg,
     padding: 16,
-    gap: 12,
+    ...lightTheme.shadows.medium,
   },
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  infoIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: lightTheme.colors.warningLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   infoText: {
-    fontSize: 14,
-    color: '#616161',
-    marginLeft: 12,
+    fontSize: 13,
+    color: lightTheme.colors.textSecondary,
+    fontFamily: lightTheme.fonts.bodyMedium,
     flex: 1,
   },
+  infoDivider: {
+    height: 1,
+    backgroundColor: lightTheme.colors.border,
+    marginVertical: 12,
+  },
   menuSection: {
-    backgroundColor: '#fff',
-    marginTop: 16,
-    marginHorizontal: 16,
-    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surface,
+    marginTop: 20,
+    marginHorizontal: 20,
+    borderRadius: lightTheme.borderRadius.lg,
     overflow: 'hidden',
-    ...lightTheme.shadows.small,
+    borderWidth: 1,
+    borderColor: lightTheme.colors.border,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: lightTheme.colors.border,
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
   },
   menuIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3E5F5',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: lightTheme.colors.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 14,
   },
   menuContent: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#212121',
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
     marginBottom: 2,
   },
   menuSubtitle: {
-    fontSize: 13,
-    color: '#757575',
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textSecondary,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: 16,
+    backgroundColor: lightTheme.colors.errorLight,
+    marginHorizontal: 20,
+    marginTop: 20,
     marginBottom: 24,
     padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FFCDD2',
+    borderRadius: lightTheme.borderRadius.lg,
+    gap: 8,
   },
   logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#F44336',
-    marginLeft: 8,
+    fontSize: 15,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.error,
   },
   version: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#BDBDBD',
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textTertiary,
     marginBottom: 32,
   },
 });

@@ -7,13 +7,11 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity,
   Alert,
-  Image,
   Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Header, PrimaryButton, CategoryChip } from '../../components/common';
+import { Header, PrimaryButton, CategoryChip, ImagePickerField } from '../../components/common';
 import { lightTheme } from '../../theme';
 import { CATEGORIES } from '../../constants';
 import { paintingService } from '../../api/services';
@@ -39,7 +37,7 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
 
   const handleSave = async () => {
     if (!title.trim() || !artist.trim() || !price.trim() || !description.trim() || !image.trim()) {
-      Alert.alert('Missing Information', 'Please fill in all required fields');
+      Alert.alert('Missing Information', 'Please fill in all required fields, including a photo');
       return;
     }
 
@@ -110,9 +108,7 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {image.trim().length > 0 && (
-            <Image source={{ uri: image }} style={styles.preview} />
-          )}
+          <ImagePickerField value={image} onChange={setImage} />
 
           <Text style={styles.label}>Title *</Text>
           <TextInput
@@ -120,7 +116,7 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
             value={title}
             onChangeText={setTitle}
             placeholder="e.g. Sunset Symphony"
-            placeholderTextColor="#BDBDBD"
+            placeholderTextColor={lightTheme.colors.textTertiary}
           />
 
           <Text style={styles.label}>Artist *</Text>
@@ -129,7 +125,7 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
             value={artist}
             onChangeText={setArtist}
             placeholder="e.g. Anil Jayasuriya"
-            placeholderTextColor="#BDBDBD"
+            placeholderTextColor={lightTheme.colors.textTertiary}
           />
 
           <View style={styles.row}>
@@ -140,7 +136,7 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
                 value={price}
                 onChangeText={setPrice}
                 placeholder="15000"
-                placeholderTextColor="#BDBDBD"
+                placeholderTextColor={lightTheme.colors.textTertiary}
                 keyboardType="numeric"
               />
             </View>
@@ -151,7 +147,7 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
                 value={stock}
                 onChangeText={setStock}
                 placeholder="5"
-                placeholderTextColor="#BDBDBD"
+                placeholderTextColor={lightTheme.colors.textTertiary}
                 keyboardType="numeric"
               />
             </View>
@@ -163,19 +159,8 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
             value={rating}
             onChangeText={setRating}
             placeholder="4.5"
-            placeholderTextColor="#BDBDBD"
+            placeholderTextColor={lightTheme.colors.textTertiary}
             keyboardType="numeric"
-          />
-
-          <Text style={styles.label}>Image URL *</Text>
-          <TextInput
-            style={styles.input}
-            value={image}
-            onChangeText={setImage}
-            placeholder="https://images.unsplash.com/..."
-            placeholderTextColor="#BDBDBD"
-            autoCapitalize="none"
-            autoCorrect={false}
           />
 
           <Text style={styles.label}>Description *</Text>
@@ -184,7 +169,7 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
             value={description}
             onChangeText={setDescription}
             placeholder="Describe the painting..."
-            placeholderTextColor="#BDBDBD"
+            placeholderTextColor={lightTheme.colors.textTertiary}
             multiline
             numberOfLines={4}
             textAlignVertical="top"
@@ -208,13 +193,15 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
 
           <View style={styles.switchRow}>
             <View style={styles.switchLabel}>
-              <Ionicons name="star" size={20} color={lightTheme.colors.warning} />
+              <View style={styles.switchIconWrap}>
+                <Ionicons name="star" size={16} color={lightTheme.colors.warning} />
+              </View>
               <Text style={styles.switchText}>Featured Painting</Text>
             </View>
             <Switch
               value={featured}
               onValueChange={setFeatured}
-              trackColor={{ false: '#E0E0E0', true: `${lightTheme.colors.primary}80` }}
+              trackColor={{ false: lightTheme.colors.border, true: `${lightTheme.colors.primary}80` }}
               thumbColor={featured ? lightTheme.colors.primary : '#f4f3f4'}
             />
           </View>
@@ -234,7 +221,7 @@ export const AdminPaintingFormScreen: React.FC<Props> = ({ navigation, route }) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
   },
   flex: {
     flex: 1,
@@ -243,32 +230,26 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  preview: {
-    width: '100%',
-    height: 180,
-    borderRadius: 12,
-    backgroundColor: '#F0F0F0',
-    marginBottom: 20,
-  },
   label: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#616161',
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.textSecondary,
     marginBottom: 8,
     marginTop: 4,
   },
   input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.md,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 15,
     fontSize: 15,
-    color: '#212121',
+    color: lightTheme.colors.text,
     marginBottom: 16,
+    ...lightTheme.shadows.small,
   },
   textArea: {
     minHeight: 100,
-    paddingTop: 14,
+    paddingTop: 15,
   },
   row: {
     flexDirection: 'row',
@@ -284,21 +265,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.md,
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 24,
+    ...lightTheme.shadows.small,
   },
   switchLabel: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  switchIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: lightTheme.colors.warningLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
   switchText: {
     fontSize: 15,
-    color: '#212121',
-    marginLeft: 10,
-    fontWeight: '500',
+    color: lightTheme.colors.text,
+    fontFamily: lightTheme.fonts.bodySemibold,
   },
   saveButton: {
     marginTop: 4,

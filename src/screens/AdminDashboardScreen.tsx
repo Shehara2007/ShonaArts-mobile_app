@@ -9,12 +9,12 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LoadingSpinner } from '../components/common';
 import { lightTheme } from '../theme';
 import { formatCurrency } from '../utils/helpers';
 import { dashboardService } from '../api/services';
-import { useAppDispatch } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { logout } from '../redux/slices/authSlice';
 import { clearAuthData } from '../utils/storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -24,6 +24,8 @@ type Props = NativeStackScreenProps<any, 'AdminDashboard'>;
 
 export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -75,33 +77,39 @@ export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
     );
   };
 
-  const menuItems = [
+  const menuItems: Array<{
+    icon: keyof typeof Ionicons.glyphMap;
+    title: string;
+    subtitle: string;
+    color: string;
+    onPress: () => void;
+  }> = [
     {
       icon: 'color-palette',
       title: 'Manage Paintings',
       subtitle: 'Add, edit, or delete paintings',
-      color: '#6200EE',
+      color: lightTheme.colors.primary,
       onPress: () => navigation.navigate('AdminPaintings'),
     },
     {
       icon: 'receipt',
       title: 'Manage Orders',
       subtitle: 'View and update order status',
-      color: '#03DAC6',
+      color: lightTheme.colors.secondary,
       onPress: () => navigation.navigate('AdminOrders'),
     },
     {
       icon: 'people',
       title: 'Manage Users',
       subtitle: 'View and manage user accounts',
-      color: '#FF6D00',
+      color: '#B0562D',
       onPress: () => navigation.navigate('AdminUsers'),
     },
     {
       icon: 'analytics',
       title: 'Analytics',
       subtitle: 'View detailed analytics',
-      color: '#00BFA5',
+      color: '#5C7A52',
       onPress: () => navigation.navigate('AdminAnalytics'),
     },
   ];
@@ -119,35 +127,40 @@ export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
       }
     >
       {/* Header */}
-      <LinearGradient
-        colors={[lightTheme.colors.gradient1, lightTheme.colors.gradient2]}
-        style={styles.header}
-      >
+      <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
         <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.headerSubtitle}>Welcome Admin</Text>
-            <Text style={styles.headerTitle}>Dashboard</Text>
+          <View style={styles.headerLeft}>
+            <View style={styles.adminBadge}>
+              <Ionicons name="shield-checkmark" size={12} color="#fff" />
+              <Text style={styles.adminBadgeText}>Admin</Text>
+            </View>
+            <Text style={styles.headerTitle}>Hi, {user?.name?.split(' ')[0] ?? 'Admin'}</Text>
           </View>
           <TouchableOpacity
             style={styles.logoutIconButton}
             onPress={handleLogout}
+            activeOpacity={0.8}
           >
-            <Ionicons name="log-out-outline" size={24} color="#fff" />
+            <Ionicons name="log-out-outline" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
         <View style={styles.statsRow}>
           <View style={[styles.statCard, styles.statCardPrimary]}>
-            <Ionicons name="color-palette" size={32} color="#fff" />
+            <View style={styles.statIconWrap}>
+              <Ionicons name="color-palette" size={20} color="#fff" />
+            </View>
             <Text style={styles.statValue}>{stats?.totalPaintings || 0}</Text>
             <Text style={styles.statLabel}>Paintings</Text>
           </View>
 
           <View style={[styles.statCard, styles.statCardSecondary]}>
-            <Ionicons name="receipt" size={32} color="#fff" />
+            <View style={styles.statIconWrap}>
+              <Ionicons name="receipt" size={20} color="#fff" />
+            </View>
             <Text style={styles.statValue}>{stats?.totalOrders || 0}</Text>
             <Text style={styles.statLabel}>Orders</Text>
           </View>
@@ -155,13 +168,17 @@ export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.statsRow}>
           <View style={[styles.statCard, styles.statCardSuccess]}>
-            <Ionicons name="people" size={32} color="#fff" />
+            <View style={styles.statIconWrap}>
+              <Ionicons name="people" size={20} color="#fff" />
+            </View>
             <Text style={styles.statValue}>{stats?.totalUsers || 0}</Text>
             <Text style={styles.statLabel}>Users</Text>
           </View>
 
           <View style={[styles.statCard, styles.statCardWarning]}>
-            <Ionicons name="cash" size={32} color="#fff" />
+            <View style={styles.statIconWrap}>
+              <Ionicons name="cash" size={20} color="#fff" />
+            </View>
             <Text style={styles.statValue}>
               {formatCurrency(stats?.revenue || 0).replace('LKR ', '')}
             </Text>
@@ -178,16 +195,16 @@ export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
             key={index}
             style={styles.menuItem}
             onPress={item.onPress}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
           >
-            <View style={[styles.menuIconContainer, { backgroundColor: `${item.color}20` }]}>
-              <Ionicons name={item.icon as any} size={24} color={item.color} />
+            <View style={[styles.menuIconContainer, { backgroundColor: `${item.color}18` }]}>
+              <Ionicons name={item.icon} size={22} color={item.color} />
             </View>
             <View style={styles.menuContent}>
               <Text style={styles.menuTitle}>{item.title}</Text>
               <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#BDBDBD" />
+            <Ionicons name="chevron-forward" size={18} color={lightTheme.colors.textTertiary} />
           </TouchableOpacity>
         ))}
       </View>
@@ -198,39 +215,55 @@ export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: lightTheme.colors.background,
   },
   header: {
-    paddingTop: 48,
-    paddingBottom: 32,
-    paddingHorizontal: 16,
+    backgroundColor: lightTheme.colors.primary,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: lightTheme.borderRadius.xxl,
+    borderBottomRightRadius: lightTheme.borderRadius.xxl,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
-    marginBottom: 4,
+  headerLeft: {
+    flex: 1,
+  },
+  adminBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: lightTheme.borderRadius.round,
+    gap: 5,
+    marginBottom: 10,
+  },
+  adminBadgeText: {
+    fontSize: 11,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#fff',
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 26,
+    fontFamily: lightTheme.fonts.display,
     color: '#fff',
   },
   logoutIconButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   statsContainer: {
-    padding: 16,
-    marginTop: -16,
+    padding: 20,
+    marginTop: -24,
   },
   statsRow: {
     flexDirection: 'row',
@@ -239,71 +272,80 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    padding: 20,
-    borderRadius: 16,
+    padding: 18,
+    borderRadius: lightTheme.borderRadius.lg,
     ...lightTheme.shadows.medium,
   },
   statCardPrimary: {
     backgroundColor: lightTheme.colors.primary,
   },
   statCardSecondary: {
-    backgroundColor: '#03DAC6',
+    backgroundColor: lightTheme.colors.secondary,
   },
   statCardSuccess: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#5C7A52',
   },
   statCardWarning: {
-    backgroundColor: '#FF9800',
+    backgroundColor: '#C0954C',
+  },
+  statIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   statValue: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 22,
+    fontFamily: lightTheme.fonts.bodyBold,
     color: '#fff',
-    marginTop: 12,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: 'rgba(255,255,255,0.9)',
+    fontFamily: lightTheme.fonts.bodySemibold,
   },
   menuSection: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingBottom: 32,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#212121',
-    marginBottom: 16,
+    fontSize: 18,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
+    marginBottom: 14,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.surface,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: lightTheme.borderRadius.lg,
     marginBottom: 12,
     ...lightTheme.shadows.small,
   },
   menuIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 14,
   },
   menuContent: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#212121',
+    fontSize: 15,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
     marginBottom: 2,
   },
   menuSubtitle: {
-    fontSize: 13,
-    color: '#757575',
+    fontSize: 12,
+    color: lightTheme.colors.textSecondary,
   },
 });

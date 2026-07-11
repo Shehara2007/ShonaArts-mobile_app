@@ -19,28 +19,28 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#757575" style={styles.icon} />
+        <Ionicons name="search" size={17} color={lightTheme.colors.textTertiary} style={styles.icon} />
         <TextInput
           style={styles.input}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#BDBDBD"
+          placeholderTextColor={lightTheme.colors.textTertiary}
         />
         {value.length > 0 && (
-          <TouchableOpacity onPress={() => onChangeText('')}>
-            <Ionicons name="close-circle" size={20} color="#757575" />
+          <TouchableOpacity onPress={() => onChangeText('')} hitSlop={8}>
+            <Ionicons name="close-circle" size={17} color={lightTheme.colors.textTertiary} />
           </TouchableOpacity>
         )}
       </View>
-      
+
       {onFilterPress && (
         <TouchableOpacity
           style={styles.filterButton}
           onPress={onFilterPress}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Ionicons name="options" size={22} color="#fff" />
+          <Ionicons name="options-outline" size={18} color={lightTheme.colors.text} />
         </TouchableOpacity>
       )}
     </View>
@@ -51,34 +51,38 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 12,
   },
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 48,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: lightTheme.colors.border,
+    paddingHorizontal: 14,
+    height: 50,
   },
   icon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#212121',
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.text,
   },
   filterButton: {
     marginLeft: 12,
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: lightTheme.colors.primary,
+    width: 50,
+    height: 50,
+    borderRadius: lightTheme.borderRadius.md,
+    backgroundColor: lightTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: lightTheme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-    ...lightTheme.shadows.small,
   },
 });

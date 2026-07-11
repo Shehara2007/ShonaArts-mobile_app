@@ -22,6 +22,19 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type Props = NativeStackScreenProps<any, 'Register'>;
 
+const FIELDS: Array<{
+  key: 'name' | 'email' | 'phone' | 'address';
+  icon: keyof typeof Ionicons.glyphMap;
+  placeholder: string;
+  keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  autoCapitalize?: 'none' | 'words';
+}> = [
+  { key: 'name', icon: 'person-outline', placeholder: 'Full Name', autoCapitalize: 'words' },
+  { key: 'email', icon: 'mail-outline', placeholder: 'Email Address', keyboardType: 'email-address', autoCapitalize: 'none' },
+  { key: 'phone', icon: 'call-outline', placeholder: 'Phone (+94XXXXXXXXX)', keyboardType: 'phone-pad' },
+  { key: 'address', icon: 'location-outline', placeholder: 'Address', autoCapitalize: 'words' },
+];
+
 export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const [name, setName] = useState('');
@@ -33,8 +46,10 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const values = { name, email, phone, address };
+  const setters = { name: setName, email: setEmail, phone: setPhone, address: setAddress };
+
   const handleRegister = async () => {
-    // Validation
     if (!name || !email || !phone || !address || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -73,7 +88,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
       if (response.success && response.data) {
         const { user, token } = response.data;
-        
+
         await storeAuthData(token, user);
         dispatch(setCredentials({ user, token }));
 
@@ -85,10 +100,9 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         ]);
       }
     } catch (error: any) {
-      console.error('Registration error:', error);
       Alert.alert(
         'Registration Failed',
-        error.response?.data?.message || 'Could not create account'
+        error.message || 'Could not create account'
       );
     } finally {
       setLoading(false);
@@ -98,7 +112,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Header title="Create Account" onBackPress={() => navigation.goBack()} />
-      
+
       <KeyboardAvoidingView
         style={styles.content}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -108,112 +122,57 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name="person-outline"
-              size={20}
-              color="#757575"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              placeholderTextColor="#BDBDBD"
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-            />
-          </View>
+          <Text style={styles.title}>Join Shona Arts</Text>
+          <Text style={styles.subtitle}>Create an account to start collecting art</Text>
+
+          {FIELDS.map((field) => (
+            <View key={field.key} style={styles.inputContainer}>
+              <View style={styles.inputIconWrap}>
+                <Ionicons name={field.icon} size={18} color={lightTheme.colors.primary} />
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder={field.placeholder}
+                placeholderTextColor={lightTheme.colors.textTertiary}
+                value={values[field.key]}
+                onChangeText={setters[field.key]}
+                keyboardType={field.keyboardType}
+                autoCapitalize={field.autoCapitalize}
+                autoCorrect={false}
+              />
+            </View>
+          ))}
 
           <View style={styles.inputContainer}>
-            <Ionicons
-              name="mail-outline"
-              size={20}
-              color="#757575"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email Address"
-              placeholderTextColor="#BDBDBD"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name="call-outline"
-              size={20}
-              color="#757575"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Phone (+94XXXXXXXXX)"
-              placeholderTextColor="#BDBDBD"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name="location-outline"
-              size={20}
-              color="#757575"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Address"
-              placeholderTextColor="#BDBDBD"
-              value={address}
-              onChangeText={setAddress}
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color="#757575"
-              style={styles.inputIcon}
-            />
+            <View style={styles.inputIconWrap}>
+              <Ionicons name="lock-closed-outline" size={18} color={lightTheme.colors.primary} />
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Password (min 6 characters)"
-              placeholderTextColor="#BDBDBD"
+              placeholderTextColor={lightTheme.colors.textTertiary}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color="#757575"
+                size={18}
+                color={lightTheme.colors.textTertiary}
               />
             </TouchableOpacity>
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color="#757575"
-              style={styles.inputIcon}
-            />
+            <View style={styles.inputIconWrap}>
+              <Ionicons name="lock-closed-outline" size={18} color={lightTheme.colors.primary} />
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Confirm Password"
-              placeholderTextColor="#BDBDBD"
+              placeholderTextColor={lightTheme.colors.textTertiary}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!showPassword}
@@ -246,7 +205,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
   },
   content: {
     flex: 1,
@@ -254,25 +213,43 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 24,
   },
+  title: {
+    fontSize: 24,
+    fontFamily: lightTheme.fonts.display,
+    color: lightTheme.colors.text,
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: lightTheme.colors.textSecondary,
+    marginBottom: 28,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.md,
+    paddingHorizontal: 14,
+    marginBottom: 14,
     height: 56,
+    ...lightTheme.shadows.small,
   },
-  inputIcon: {
+  inputIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: lightTheme.colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#212121',
+    fontSize: 15,
+    color: lightTheme.colors.text,
   },
   registerButton: {
-    marginTop: 24,
+    marginTop: 20,
   },
   loginContainer: {
     marginTop: 24,
@@ -280,10 +257,10 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 14,
-    color: '#757575',
+    color: lightTheme.colors.textSecondary,
   },
   loginLink: {
     color: lightTheme.colors.primary,
-    fontWeight: '600',
+    fontFamily: lightTheme.fonts.bodyBold,
   },
 });

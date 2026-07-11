@@ -24,12 +24,39 @@ online art marketplace, with a mock in-memory backend so it runs with no server 
 
 - **Framework**: Expo SDK 54 / React Native 0.81 / React 19
 - **Language**: TypeScript
-- **Navigation**: React Navigation (native-stack + bottom-tabs)
+- **Navigation**: React Navigation (native-stack + floating bottom tabs)
 - **State**: Redux Toolkit
 - **API client**: Axios (wired for a real backend later)
 - **Mock backend**: `src/api/mockApi.ts` — plain in-memory mock, no server required
-- **UI**: React Native Paper + `@expo/vector-icons`
+- **UI**: Custom design system (violet/teal palette, soft shadows, rounded cards) + `@expo/vector-icons`
+- **Images**: `expo-image-picker` — admin can add painting photos via camera or gallery
 - **Storage**: AsyncStorage
+
+## Design
+
+The UI follows a warm "gallery auction house" aesthetic — cream backgrounds, a
+near-black primary for cards/buttons, and a muted gold accent for prices —
+defined in `src/theme/`:
+- **Colors**: warm cream background (`#F6F1E7`), near-black primary (`#1E1B16`),
+  gold accent (`#C0954C`) for prices and highlights
+- **Typography**: Playfair Display (serif) for headings/titles, DM Sans for
+  body text — loaded via `@expo-google-fonts` in `App.tsx` before first render
+- Large corner radii, soft shadows, pill-shaped chips, flat minimal headers
+  (no colored bars), and a docked bottom tab bar with an underline active
+  indicator
+
+To retheme the app, edit `src/theme/colors.ts` and `src/theme/index.ts` —
+every screen and shared component reads from `lightTheme`, so changes
+propagate app-wide.
+
+### Responsiveness
+
+- All screens/headers respect device safe-area insets (notches, status bars,
+  home indicators) via `react-native-safe-area-context`, rather than
+  hardcoded padding guesses.
+- Grid card widths recalculate on rotation/resize using `useWindowDimensions`
+  instead of a static snapshot.
+- The bottom tab bar height and padding account for the device's bottom inset.
 
 ## Getting Started
 

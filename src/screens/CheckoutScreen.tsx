@@ -33,7 +33,6 @@ export const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
 
   const handlePlaceOrder = async () => {
-    // Validation
     if (!shippingAddress.trim()) {
       Alert.alert('Error', 'Please enter shipping address');
       return;
@@ -94,7 +93,7 @@ export const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
         );
       }
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to place order');
+      Alert.alert('Error', error.message || 'Failed to place order');
     } finally {
       setLoading(false);
     }
@@ -110,11 +109,13 @@ export const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Shipping Information</Text>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="location" size={20} color="#757575" style={styles.inputIcon} />
+            <View style={styles.inputIconWrap}>
+              <Ionicons name="location" size={16} color={lightTheme.colors.primary} />
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Shipping Address"
-              placeholderTextColor="#BDBDBD"
+              placeholderTextColor={lightTheme.colors.textTertiary}
               value={shippingAddress}
               onChangeText={setShippingAddress}
               multiline
@@ -122,11 +123,13 @@ export const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="call" size={20} color="#757575" style={styles.inputIcon} />
+            <View style={styles.inputIconWrap}>
+              <Ionicons name="call" size={16} color={lightTheme.colors.primary} />
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Phone Number (+94XXXXXXXXX)"
-              placeholderTextColor="#BDBDBD"
+              placeholderTextColor={lightTheme.colors.textTertiary}
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
@@ -146,16 +149,18 @@ export const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
                 paymentMethod === method.value && styles.paymentOptionSelected,
               ]}
               onPress={() => setPaymentMethod(method.value)}
+              activeOpacity={0.8}
             >
               <View style={styles.radioButton}>
                 {paymentMethod === method.value && <View style={styles.radioButtonSelected} />}
               </View>
-              <Ionicons
-                name={method.value === 'cod' ? 'cash-outline' : 'card-outline'}
-                size={24}
-                color={paymentMethod === method.value ? lightTheme.colors.primary : '#757575'}
-                style={styles.paymentIcon}
-              />
+              <View style={styles.paymentIconWrap}>
+                <Ionicons
+                  name={method.value === 'cod' ? 'cash-outline' : 'card-outline'}
+                  size={18}
+                  color={paymentMethod === method.value ? lightTheme.colors.primary : lightTheme.colors.textSecondary}
+                />
+              </View>
               <Text
                 style={[
                   styles.paymentLabel,
@@ -179,7 +184,7 @@ export const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Shipping</Text>
-            <Text style={styles.summaryValue}>Free</Text>
+            <Text style={styles.summaryFree}>Free</Text>
           </View>
 
           <View style={styles.divider} />
@@ -205,115 +210,129 @@ export const CheckoutScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: lightTheme.colors.background,
   },
   content: {
     flex: 1,
   },
   section: {
-    padding: 16,
-    borderBottomWidth: 8,
-    borderBottomColor: '#F5F5F5',
+    padding: 20,
+    marginTop: 12,
+    marginHorizontal: 16,
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.lg,
+    ...lightTheme.shadows.small,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#212121',
+    fontSize: 16,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
     marginBottom: 16,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    backgroundColor: lightTheme.colors.surfaceAlt,
+    borderRadius: lightTheme.borderRadius.md,
+    paddingHorizontal: 14,
     marginBottom: 12,
-    minHeight: 56,
+    minHeight: 54,
   },
-  inputIcon: {
+  inputIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: lightTheme.colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#212121',
-    paddingVertical: 16,
+    fontSize: 15,
+    color: lightTheme.colors.text,
+    paddingVertical: 14,
   },
   paymentOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
-    marginBottom: 12,
+    padding: 14,
+    borderRadius: lightTheme.borderRadius.md,
+    backgroundColor: lightTheme.colors.surfaceAlt,
+    marginBottom: 10,
   },
   paymentOptionSelected: {
-    borderColor: lightTheme.colors.primary,
-    backgroundColor: '#F3E5F5',
+    backgroundColor: lightTheme.colors.primaryLight,
   },
   radioButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: lightTheme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   radioButtonSelected: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: lightTheme.colors.primary,
   },
-  paymentIcon: {
-    marginRight: 12,
+  paymentIconWrap: {
+    marginRight: 10,
   },
   paymentLabel: {
-    fontSize: 16,
-    color: '#757575',
-    fontWeight: '500',
+    fontSize: 15,
+    color: lightTheme.colors.textSecondary,
+    fontFamily: lightTheme.fonts.bodySemibold,
   },
   paymentLabelSelected: {
     color: lightTheme.colors.primary,
-    fontWeight: '600',
+    fontFamily: lightTheme.fonts.bodyBold,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   summaryLabel: {
-    fontSize: 15,
-    color: '#757575',
+    fontSize: 14,
+    color: lightTheme.colors.textSecondary,
   },
   summaryValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#212121',
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.text,
+  },
+  summaryFree: {
+    fontSize: 14,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.success,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
-    marginVertical: 12,
+    backgroundColor: lightTheme.colors.border,
+    marginVertical: 10,
   },
   totalLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#212121',
+    fontSize: 16,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: lightTheme.colors.text,
   },
   totalValue: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
   },
   footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#fff',
+    padding: 20,
+    paddingBottom: 28,
+    backgroundColor: lightTheme.colors.surface,
+    borderTopLeftRadius: lightTheme.borderRadius.xl,
+    borderTopRightRadius: lightTheme.borderRadius.xl,
+    ...lightTheme.shadows.medium,
   },
 });
