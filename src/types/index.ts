@@ -7,6 +7,11 @@ export interface User {
   address: string;
   role: 'customer' | 'admin';
   avatar?: string;
+  notificationPrefs?: {
+    orderUpdates: boolean;
+    promotions: boolean;
+    wishlistRestock: boolean;
+  };
 }
 
 // Painting Types
@@ -55,6 +60,7 @@ export interface Order {
   shippingAddress: string;
   phone: string;
   paymentMethod: string;
+  cancelReason?: string;
 }
 
 // Custom Order Types
@@ -65,8 +71,33 @@ export interface CustomOrder {
   budget: number;
   canvasSize: string;
   image?: string;
-  status: 'pending' | 'in-progress' | 'completed' | 'rejected';
+  status: 'pending' | 'in-progress' | 'completed' | 'rejected' | 'cancelled';
   createdAt: string;
+  adminNote?: string;
+}
+
+// Review Types
+export interface Review {
+  id: string;
+  paintingId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+// Notification Types
+export interface AppNotification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'order' | 'promo' | 'wishlist' | 'system';
+  read: boolean;
+  createdAt: string;
+  relatedId?: string;
 }
 
 // Auth Types

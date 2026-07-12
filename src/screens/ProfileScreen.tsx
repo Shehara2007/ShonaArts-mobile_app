@@ -56,7 +56,7 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       title: 'Edit Profile',
       subtitle: 'Update your personal information',
       onPress: () => {
-        Alert.alert('Coming Soon', 'Edit profile feature will be available soon');
+        navigation.navigate('EditProfile');
       },
     },
     {
@@ -64,7 +64,7 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       title: 'Custom Artwork Request',
       subtitle: 'Request a custom painting',
       onPress: () => {
-        Alert.alert('Coming Soon', 'Custom artwork request feature will be available soon');
+        navigation.navigate('CustomOrder');
       },
     },
     {
@@ -72,15 +72,15 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       title: 'Notifications',
       subtitle: 'Manage your notifications',
       onPress: () => {
-        Alert.alert('Coming Soon', 'Notifications feature will be available soon');
+        navigation.navigate('Notifications');
       },
     },
     {
       icon: 'settings-outline',
       title: 'Settings',
-      subtitle: 'App preferences and settings',
+      subtitle: 'Password, preferences and privacy',
       onPress: () => {
-        Alert.alert('Coming Soon', 'Settings feature will be available soon');
+        navigation.navigate('Settings');
       },
     },
     {
@@ -115,9 +115,13 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
               <Ionicons name="person" size={34} color="#fff" />
             </View>
           )}
-          <View style={styles.editAvatarButton}>
+          <TouchableOpacity
+            style={styles.editAvatarButton}
+            onPress={() => navigation.navigate('EditProfile')}
+            activeOpacity={0.8}
+          >
             <Ionicons name="camera" size={12} color={lightTheme.colors.text} />
-          </View>
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.userName}>{user?.name}</Text>

@@ -21,7 +21,7 @@ import {
 } from '../components/common';
 import { lightTheme } from '../theme';
 import { CATEGORIES } from '../constants';
-import { paintingService, wishlistService } from '../api/services';
+import { paintingService, wishlistService, notificationService } from '../api/services';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import {
   setPaintings,
@@ -31,6 +31,7 @@ import {
 } from '../redux/slices/paintingSlice';
 import { addToWishlist, removeFromWishlist } from '../redux/slices/wishlistSlice';
 import { selectCartItemCount } from '../redux/slices/cartSlice';
+import { setNotifications, selectUnreadNotificationCount } from '../redux/slices/notificationSlice';
 import { formatCurrency, debounce } from '../utils/helpers';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -43,6 +44,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   );
   const { items: wishlistItems } = useAppSelector((state) => state.wishlist);
   const cartCount = useAppSelector(selectCartItemCount);
+  const unreadCount = useAppSelector(selectUnreadNotificationCount);
 
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -50,6 +52,15 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   useEffect(() => {
     loadPaintings();
   }, [filters]);
+
+  useEffect(() => {
+    notificationService
+      .getAll()
+      .then((res) => {
+        if (res.success) dispatch(setNotifications(res.data));
+      })
+      .catch(() => {});
+  }, []);
 
   const loadPaintings = async () => {
     dispatch(setLoading(true));
@@ -114,18 +125,32 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
           <Ionicons name="sparkles" size={16} color={lightTheme.colors.accent} />
           <Text style={styles.brandText}>Shona Arts</Text>
         </View>
-        <TouchableOpacity
-          style={styles.cartButton}
-          onPress={() => navigation.navigate('Cart')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="cart-outline" size={19} color={lightTheme.colors.text} />
-          {cartCount > 0 && (
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>{cartCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <View style={styles.topBarActions}>
+          <TouchableOpacity
+            style={styles.cartButton}
+            onPress={() => navigation.navigate('Notifications')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="notifications-outline" size={18} color={lightTheme.colors.text} />
+            {unreadCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.cartButton}
+            onPress={() => navigation.navigate('Cart')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="cart-outline" size={19} color={lightTheme.colors.text} />
+            {cartCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       <SearchBar
@@ -277,6 +302,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: lightTheme.fonts.displaySemibold,
     color: lightTheme.colors.text,
+  },
+  topBarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   cartButton: {
     position: 'relative',

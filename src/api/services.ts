@@ -31,20 +31,20 @@ export const authService = {
   updateProfile: async (data: Partial<User>) => {
     return await mockApi.updateProfile(data);
   },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    return await mockApi.changePassword(currentPassword, newPassword);
+  },
+
+  deleteAccount: async () => {
+    return await mockApi.deleteAccount();
+  },
 };
 
 // Painting Services
 export const paintingService = {
   getAll: async (filters?: PaintingFilters) => {
-    console.log('🎨 paintingService.getAll called with filters:', filters);
-    try {
-      const result = await mockApi.getPaintings(filters);
-      console.log('✅ paintingService.getAll success:', result.data?.length, 'paintings');
-      return result;
-    } catch (error) {
-      console.error('❌ paintingService.getAll error:', error);
-      throw error;
-    }
+    return await mockApi.getPaintings(filters);
   },
 
   getById: async (id: string) => {
@@ -116,6 +116,10 @@ export const orderService = {
     return await mockApi.updateOrderStatus(id, status);
   },
 
+  cancel: async (id: string, reason?: string) => {
+    return await mockApi.cancelOrder(id, reason);
+  },
+
   delete: async (id: string) => {
     return await mockApi.deleteOrder(id);
   },
@@ -123,17 +127,54 @@ export const orderService = {
 
 // Custom Order Services
 export const customOrderService = {
+  getMine: async () => {
+    return await mockApi.getMyCustomOrders();
+  },
+
   create: async (data: Omit<CustomOrder, 'id' | 'customerId' | 'status' | 'createdAt'>) => {
-    return {
-      success: true,
-      data: {
-        ...data,
-        id: `CO${Date.now()}`,
-        customerId: '1',
-        status: 'pending' as const,
-        createdAt: new Date().toISOString(),
-      } as CustomOrder,
-    };
+    return await mockApi.createCustomOrder(data);
+  },
+
+  cancel: async (id: string) => {
+    return await mockApi.cancelCustomOrder(id);
+  },
+};
+
+// Review Services
+export const reviewService = {
+  getForPainting: async (paintingId: string) => {
+    return await mockApi.getReviews(paintingId);
+  },
+
+  add: async (paintingId: string, rating: number, comment: string) => {
+    return await mockApi.addReview(paintingId, rating, comment);
+  },
+
+  update: async (id: string, data: { rating?: number; comment?: string }) => {
+    return await mockApi.updateReview(id, data);
+  },
+
+  delete: async (id: string) => {
+    return await mockApi.deleteReview(id);
+  },
+};
+
+// Notification Services
+export const notificationService = {
+  getAll: async () => {
+    return await mockApi.getNotifications();
+  },
+
+  markAsRead: async (id: string) => {
+    return await mockApi.markNotificationRead(id);
+  },
+
+  markAllAsRead: async () => {
+    return await mockApi.markAllNotificationsRead();
+  },
+
+  delete: async (id: string) => {
+    return await mockApi.deleteNotification(id);
   },
 };
 

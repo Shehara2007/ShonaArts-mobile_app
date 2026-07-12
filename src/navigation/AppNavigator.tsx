@@ -19,6 +19,10 @@ import { CartScreen } from '../screens/CartScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { OrdersScreen } from '../screens/OrdersScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { EditProfileScreen } from '../screens/EditProfileScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { CustomOrderScreen } from '../screens/CustomOrderScreen';
 
 // Admin Screens
 import { AdminDashboardScreen } from '../screens/AdminDashboardScreen';
@@ -103,6 +107,10 @@ export const AppNavigator = () => {
       <Stack.Screen name="PaintingDetail" component={PaintingDetailScreen} />
       <Stack.Screen name="Cart" component={CartScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="CustomOrder" component={CustomOrderScreen} />
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
       <Stack.Screen name="AdminPaintings" component={AdminPaintingsScreen} />
       <Stack.Screen name="AdminPaintingForm" component={AdminPaintingFormScreen} />

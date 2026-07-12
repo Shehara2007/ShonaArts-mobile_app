@@ -8,17 +8,18 @@ import {
   TouchableOpacity,
   Alert,
   Share,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header, PrimaryButton, LoadingSpinner, ErrorState } from '../components/common';
 import { lightTheme } from '../theme';
-import { formatCurrency } from '../utils/helpers';
-import { paintingService, cartService, wishlistService } from '../api/services';
+import { formatCurrency, formatDate } from '../utils/helpers';
+import { paintingService, cartService, wishlistService, reviewService } from '../api/services';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { addToCart } from '../redux/slices/cartSlice';
 import { addToWishlist, removeFromWishlist } from '../redux/slices/wishlistSlice';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { Painting } from '../types';
+import type { Painting, Review } from '../types';
 
 type Props = NativeStackScreenProps<any, 'PaintingDetail'>;
 
@@ -26,6 +27,7 @@ export const PaintingDetailScreen: React.FC<Props> = ({ navigation, route }) => 
   const { paintingId } = route.params as { paintingId: string };
   const dispatch = useAppDispatch();
   const { items: wishlistItems } = useAppSelector((state) => state.wishlist);
+  const { user } = useAppSelector((state) => state.auth);
 
   const [painting, setPainting] = useState<Painting | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,11 +35,97 @@ export const PaintingDetailScreen: React.FC<Props> = ({ navigation, route }) => 
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
 
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+
+  const myReview = reviews.find((r) => r.userId === user?.id);
+
   const isInWishlist = wishlistItems.some((item) => item.painting.id === paintingId);
 
   useEffect(() => {
     loadPainting();
+    loadReviews();
   }, [paintingId]);
+
+  const loadReviews = async () => {
+    try {
+      setLoadingReviews(true);
+      const res = await reviewService.getForPainting(paintingId);
+      if (res.success) setReviews(res.data);
+    } catch (error) {
+      // ignore
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const openReviewForm = (existing?: Review) => {
+    if (existing) {
+      setEditingReviewId(existing.id);
+      setReviewRating(existing.rating);
+      setReviewComment(existing.comment);
+    } else {
+      setEditingReviewId(null);
+      setReviewRating(5);
+      setReviewComment('');
+    }
+    setShowReviewForm(true);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewComment.trim()) {
+      Alert.alert('Missing Review', 'Please write a comment for your review');
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      if (editingReviewId) {
+        const res = await reviewService.update(editingReviewId, {
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+        });
+        if (res.success) {
+          setReviews((prev) => prev.map((r) => (r.id === editingReviewId ? res.data : r)));
+        }
+      } else {
+        const res = await reviewService.add(paintingId, reviewRating, reviewComment.trim());
+        if (res.success) {
+          setReviews((prev) => [res.data, ...prev]);
+        }
+      }
+      setShowReviewForm(false);
+      loadPainting();
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to submit review');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = (review: Review) => {
+    Alert.alert('Delete Review', 'Are you sure you want to delete your review?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await reviewService.delete(review.id);
+            setReviews((prev) => prev.filter((r) => r.id !== review.id));
+            loadPainting();
+          } catch (err: any) {
+            Alert.alert('Error', err.message || 'Failed to delete review');
+          }
+        },
+      },
+    ]);
+  };
 
   const loadPainting = async () => {
     try {
@@ -239,6 +327,112 @@ export const PaintingDetailScreen: React.FC<Props> = ({ navigation, route }) => 
 
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.description}>{painting.description}</Text>
+
+          <View style={styles.reviewsHeaderRow}>
+            <Text style={styles.sectionTitle}>
+              Reviews {reviews.length > 0 ? `(${reviews.length})` : ''}
+            </Text>
+            {!myReview && !showReviewForm && (
+              <TouchableOpacity onPress={() => openReviewForm()} activeOpacity={0.7}>
+                <Text style={styles.writeReviewLink}>Write a Review</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {showReviewForm && (
+            <View style={styles.reviewForm}>
+              <Text style={styles.reviewFormLabel}>Your Rating</Text>
+              <View style={styles.starRow}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <TouchableOpacity key={n} onPress={() => setReviewRating(n)} hitSlop={4}>
+                    <Ionicons
+                      name={n <= reviewRating ? 'star' : 'star-outline'}
+                      size={26}
+                      color={lightTheme.colors.accent}
+                      style={{ marginRight: 6 }}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.reviewFormLabel}>Your Review</Text>
+              <TextInput
+                style={styles.reviewInput}
+                value={reviewComment}
+                onChangeText={setReviewComment}
+                placeholder="Share your thoughts about this painting..."
+                placeholderTextColor={lightTheme.colors.textTertiary}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+              <View style={styles.reviewFormActions}>
+                <TouchableOpacity
+                  style={styles.reviewCancelButton}
+                  onPress={() => setShowReviewForm(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.reviewCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.reviewSubmitButton}
+                  onPress={handleSubmitReview}
+                  disabled={submittingReview}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.reviewSubmitText}>
+                    {submittingReview ? 'Saving...' : editingReviewId ? 'Update Review' : 'Submit Review'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {loadingReviews ? (
+            <Text style={styles.reviewsLoadingText}>Loading reviews...</Text>
+          ) : reviews.length === 0 ? (
+            !showReviewForm && (
+              <Text style={styles.noReviewsText}>
+                No reviews yet. Be the first to share your thoughts.
+              </Text>
+            )
+          ) : (
+            <View style={styles.reviewsList}>
+              {reviews.map((review) => (
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.reviewCardHeader}>
+                    <View style={styles.reviewAvatar}>
+                      <Text style={styles.reviewAvatarText}>{review.userName.charAt(0)}</Text>
+                    </View>
+                    <View style={styles.reviewCardHeaderText}>
+                      <Text style={styles.reviewerName}>{review.userName}</Text>
+                      <View style={styles.reviewStarsRow}>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Ionicons
+                            key={n}
+                            name={n <= review.rating ? 'star' : 'star-outline'}
+                            size={12}
+                            color={lightTheme.colors.accent}
+                          />
+                        ))}
+                        <Text style={styles.reviewDate}>{formatDate(review.createdAt)}</Text>
+                      </View>
+                    </View>
+                    {review.userId === user?.id && (
+                      <View style={styles.reviewOwnerActions}>
+                        <TouchableOpacity onPress={() => openReviewForm(review)} hitSlop={6}>
+                          <Ionicons name="pencil-outline" size={16} color={lightTheme.colors.textSecondary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDeleteReview(review)} hitSlop={6}>
+                          <Ionicons name="trash-outline" size={16} color={lightTheme.colors.error} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.reviewComment}>{review.comment}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -451,6 +645,144 @@ const styles = StyleSheet.create({
     color: lightTheme.colors.textSecondary,
     lineHeight: 22,
     marginBottom: 24,
+  },
+  reviewsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  writeReviewLink: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.accent,
+  },
+  reviewForm: {
+    backgroundColor: lightTheme.colors.surfaceAlt,
+    borderRadius: lightTheme.borderRadius.md,
+    padding: 14,
+    marginBottom: 16,
+  },
+  reviewFormLabel: {
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.textSecondary,
+    marginBottom: 8,
+  },
+  starRow: {
+    flexDirection: 'row',
+    marginBottom: 14,
+  },
+  reviewInput: {
+    backgroundColor: lightTheme.colors.surface,
+    borderRadius: lightTheme.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: lightTheme.colors.border,
+    padding: 12,
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.text,
+    minHeight: 90,
+    marginBottom: 12,
+  },
+  reviewFormActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  reviewCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: lightTheme.borderRadius.sm,
+    alignItems: 'center',
+    backgroundColor: lightTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: lightTheme.colors.border,
+  },
+  reviewCancelText: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.textSecondary,
+  },
+  reviewSubmitButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: lightTheme.borderRadius.sm,
+    alignItems: 'center',
+    backgroundColor: lightTheme.colors.primary,
+  },
+  reviewSubmitText: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: '#fff',
+  },
+  reviewsLoadingText: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textTertiary,
+    marginBottom: 20,
+  },
+  noReviewsText: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textTertiary,
+    marginBottom: 20,
+  },
+  reviewsList: {
+    marginBottom: 12,
+  },
+  reviewCard: {
+    borderTopWidth: 1,
+    borderTopColor: lightTheme.colors.border,
+    paddingVertical: 14,
+  },
+  reviewCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reviewAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: lightTheme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  reviewAvatarText: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodyBold,
+    color: '#fff',
+  },
+  reviewCardHeaderText: {
+    flex: 1,
+  },
+  reviewerName: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.text,
+    marginBottom: 3,
+  },
+  reviewStarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  reviewDate: {
+    fontSize: 11,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textTertiary,
+    marginLeft: 6,
+  },
+  reviewOwnerActions: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  reviewComment: {
+    fontSize: 13,
+    fontFamily: lightTheme.fonts.body,
+    color: lightTheme.colors.textSecondary,
+    lineHeight: 19,
   },
   footer: {
     flexDirection: 'row',

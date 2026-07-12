@@ -2,6 +2,8 @@
 import { mockUsers, mockPasswords } from '../mock/data/users';
 import { mockPaintings } from '../mock/data/paintings';
 import { mockOrders } from '../mock/data/orders';
+import { mockReviews } from '../mock/data/reviews';
+import { mockNotifications } from '../mock/data/notifications';
 import type {
   LoginCredentials,
   RegisterData,
@@ -12,6 +14,8 @@ import type {
   WishlistItem,
   CustomOrder,
   DashboardStats,
+  Review,
+  AppNotification,
   ApiResponse,
 } from '../types';
 
@@ -22,8 +26,40 @@ let orders = [...mockOrders];
 let cart: CartItem[] = [];
 let wishlist: WishlistItem[] = [];
 let customOrders: CustomOrder[] = [];
+let reviews: Review[] = [...mockReviews];
+let notifications: AppNotification[] = [...mockNotifications];
 let currentUser: User | null = null;
 let currentToken: string | null = null;
+
+// Recalculate a painting's aggregate rating from its reviews
+const recalculatePaintingRating = (paintingId: string) => {
+  const paintingReviews = reviews.filter(r => r.paintingId === paintingId);
+  const painting = paintings.find(p => p.id === paintingId);
+  if (!painting || paintingReviews.length === 0) return;
+
+  const avg = paintingReviews.reduce((sum, r) => sum + r.rating, 0) / paintingReviews.length;
+  painting.rating = Math.round(avg * 10) / 10;
+};
+
+// Push a notification for a specific user
+const pushNotification = (
+  userId: string,
+  title: string,
+  message: string,
+  type: AppNotification['type'],
+  relatedId?: string
+) => {
+  notifications.unshift({
+    id: `NTF${Date.now()}`,
+    userId,
+    title,
+    message,
+    type,
+    read: false,
+    createdAt: new Date().toISOString(),
+    relatedId,
+  });
+};
 
 // Helper to simulate network delay
 const delay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms));
@@ -42,24 +78,17 @@ const verifyToken = (token: string | null): User | null => {
 export const mockApi = {
   // Auth
   async login(credentials: LoginCredentials): Promise<ApiResponse<{ user: User; token: string }>> {
-    console.log('🔐 mockApi.login called with:', credentials.email);
     await delay();
     const { email, password } = credentials;
     const user = users.find(u => u.email === email);
 
-    console.log('👤 User found:', user ? user.name : 'NOT FOUND');
-    console.log('🔑 Password check:', mockPasswords[email] === password);
-
     if (!user || mockPasswords[email] !== password) {
-      console.error('❌ Login failed: Invalid credentials');
       throw new Error('Invalid credentials');
     }
 
     const token = generateToken(user.id);
     currentUser = user;
     currentToken = token;
-
-    console.log('✅ Login successful for:', user.email, 'Role:', user.role);
 
     return {
       success: true,
@@ -101,10 +130,8 @@ export const mockApi = {
 
   // Paintings
   async getPaintings(filters?: any): Promise<ApiResponse<Painting[]>> {
-    console.log('🖼️ mockApi.getPaintings called with filters:', filters);
     await delay(300);
     let filteredPaintings = [...paintings];
-    console.log('📊 Total paintings available:', paintings.length);
 
     if (filters?.search) {
       const search = filters.search.toLowerCase();
@@ -113,12 +140,10 @@ export const mockApi = {
         p.artist.toLowerCase().includes(search) ||
         p.description.toLowerCase().includes(search)
       );
-      console.log('🔍 After search filter:', filteredPaintings.length);
     }
 
     if (filters?.category && filters.category !== 'All') {
       filteredPaintings = filteredPaintings.filter(p => p.category === filters.category);
-      console.log('📁 After category filter:', filteredPaintings.length);
     }
 
     if (filters?.minPrice) {
@@ -138,8 +163,6 @@ export const mockApi = {
     } else if (filters?.sortBy === 'newest') {
       filteredPaintings.reverse();
     }
-
-    console.log('✅ mockApi.getPaintings returning:', filteredPaintings.length, 'paintings');
 
     return {
       success: true,
@@ -320,10 +343,52 @@ export const mockApi = {
     orders.push(newOrder);
     cart = []; // Clear cart
 
+    pushNotification(
+      currentUser.id,
+      'Order Placed',
+      `Your order ${newOrder.id} has been placed and is being processed.`,
+      'order',
+      newOrder.id
+    );
+
     return {
       success: true,
       data: newOrder,
       message: 'Order placed successfully',
+    };
+  },
+
+  async cancelOrder(id: string, reason?: string): Promise<ApiResponse<Order>> {
+    await delay(300);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    const index = orders.findIndex(o => o.id === id);
+    if (index === -1) throw new Error('Order not found');
+
+    const order = orders[index];
+
+    if (currentUser.role !== 'admin' && order.userId !== currentUser.id) {
+      throw new Error('Unauthorized');
+    }
+
+    if (order.status !== 'pending') {
+      throw new Error('Only pending orders can be cancelled');
+    }
+
+    orders[index] = { ...order, status: 'cancelled', cancelReason: reason };
+
+    pushNotification(
+      order.userId,
+      'Order Cancelled',
+      `Order ${order.id} has been cancelled.${reason ? ` Reason: ${reason}` : ''}`,
+      'order',
+      order.id
+    );
+
+    return {
+      success: true,
+      data: orders[index],
+      message: 'Order cancelled successfully',
     };
   },
 
@@ -352,6 +417,53 @@ export const mockApi = {
       success: true,
       data: currentUser,
       message: 'Profile updated successfully',
+    };
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse<null>> {
+    await delay(300);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    if (mockPasswords[currentUser.email] !== currentPassword) {
+      throw new Error('Current password is incorrect');
+    }
+
+    if (newPassword.length < 6) {
+      throw new Error('New password must be at least 6 characters');
+    }
+
+    mockPasswords[currentUser.email] = newPassword;
+
+    return {
+      success: true,
+      data: null,
+      message: 'Password changed successfully',
+    };
+  },
+
+  async deleteAccount(): Promise<ApiResponse<null>> {
+    await delay(300);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    const userId = currentUser.id;
+    const userEmail = currentUser.email;
+
+    users = users.filter(u => u.id !== userId);
+    delete mockPasswords[userEmail];
+    orders = orders.filter(o => o.userId !== userId);
+    customOrders = customOrders.filter(c => c.customerId !== userId);
+    reviews = reviews.filter(r => r.userId !== userId);
+    notifications = notifications.filter(n => n.userId !== userId);
+    cart = [];
+    wishlist = [];
+
+    currentUser = null;
+    currentToken = null;
+
+    return {
+      success: true,
+      data: null,
+      message: 'Account deleted successfully',
     };
   },
 
@@ -545,6 +657,246 @@ export const mockApi = {
       success: true,
       data: null,
       message: 'Order deleted successfully',
+    };
+  },
+
+  // Reviews
+  async getReviews(paintingId: string): Promise<ApiResponse<Review[]>> {
+    await delay(200);
+    const paintingReviews = reviews
+      .filter(r => r.paintingId === paintingId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return {
+      success: true,
+      data: paintingReviews,
+    };
+  },
+
+  async addReview(
+    paintingId: string,
+    rating: number,
+    comment: string
+  ): Promise<ApiResponse<Review>> {
+    await delay(300);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    const painting = paintings.find(p => p.id === paintingId);
+    if (!painting) throw new Error('Painting not found');
+
+    if (reviews.find(r => r.paintingId === paintingId && r.userId === currentUser!.id)) {
+      throw new Error('You have already reviewed this painting');
+    }
+
+    if (rating < 1 || rating > 5) {
+      throw new Error('Rating must be between 1 and 5');
+    }
+
+    const newReview: Review = {
+      id: `REV${Date.now()}`,
+      paintingId,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
+      rating,
+      comment: comment.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    reviews.unshift(newReview);
+    recalculatePaintingRating(paintingId);
+
+    return {
+      success: true,
+      data: newReview,
+      message: 'Review submitted successfully',
+    };
+  },
+
+  async updateReview(
+    id: string,
+    data: { rating?: number; comment?: string }
+  ): Promise<ApiResponse<Review>> {
+    await delay(300);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    const index = reviews.findIndex(r => r.id === id);
+    if (index === -1) throw new Error('Review not found');
+
+    if (reviews[index].userId !== currentUser.id) {
+      throw new Error('You can only edit your own review');
+    }
+
+    if (data.rating !== undefined && (data.rating < 1 || data.rating > 5)) {
+      throw new Error('Rating must be between 1 and 5');
+    }
+
+    reviews[index] = { ...reviews[index], ...data };
+    recalculatePaintingRating(reviews[index].paintingId);
+
+    return {
+      success: true,
+      data: reviews[index],
+      message: 'Review updated successfully',
+    };
+  },
+
+  async deleteReview(id: string): Promise<ApiResponse<null>> {
+    await delay(200);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    const review = reviews.find(r => r.id === id);
+    if (!review) throw new Error('Review not found');
+
+    if (review.userId !== currentUser.id && currentUser.role !== 'admin') {
+      throw new Error('You can only delete your own review');
+    }
+
+    reviews = reviews.filter(r => r.id !== id);
+    recalculatePaintingRating(review.paintingId);
+
+    return {
+      success: true,
+      data: null,
+      message: 'Review deleted successfully',
+    };
+  },
+
+  // Notifications
+  async getNotifications(): Promise<ApiResponse<AppNotification[]>> {
+    await delay(200);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    const userNotifications = notifications
+      .filter(n => n.userId === currentUser!.id)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return {
+      success: true,
+      data: userNotifications,
+    };
+  },
+
+  async markNotificationRead(id: string): Promise<ApiResponse<AppNotification>> {
+    await delay(150);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    const index = notifications.findIndex(n => n.id === id && n.userId === currentUser!.id);
+    if (index === -1) throw new Error('Notification not found');
+
+    notifications[index] = { ...notifications[index], read: true };
+
+    return {
+      success: true,
+      data: notifications[index],
+    };
+  },
+
+  async markAllNotificationsRead(): Promise<ApiResponse<null>> {
+    await delay(200);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    notifications = notifications.map(n =>
+      n.userId === currentUser!.id ? { ...n, read: true } : n
+    );
+
+    return {
+      success: true,
+      data: null,
+      message: 'All notifications marked as read',
+    };
+  },
+
+  async deleteNotification(id: string): Promise<ApiResponse<null>> {
+    await delay(150);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    notifications = notifications.filter(
+      n => !(n.id === id && n.userId === currentUser!.id)
+    );
+
+    return {
+      success: true,
+      data: null,
+      message: 'Notification deleted',
+    };
+  },
+
+  // Custom Orders (customer requests for bespoke artwork)
+  async getMyCustomOrders(): Promise<ApiResponse<CustomOrder[]>> {
+    await delay(200);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    const mine = customOrders
+      .filter(c => c.customerId === currentUser!.id)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return {
+      success: true,
+      data: mine,
+    };
+  },
+
+  async createCustomOrder(
+    data: Omit<CustomOrder, 'id' | 'customerId' | 'status' | 'createdAt'>
+  ): Promise<ApiResponse<CustomOrder>> {
+    await delay(300);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    if (!data.description?.trim()) {
+      throw new Error('Please describe the artwork you would like');
+    }
+
+    if (!data.budget || data.budget <= 0) {
+      throw new Error('Please enter a valid budget');
+    }
+
+    const newRequest: CustomOrder = {
+      ...data,
+      id: `CO${Date.now()}`,
+      customerId: currentUser.id,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+
+    customOrders.unshift(newRequest);
+
+    pushNotification(
+      currentUser.id,
+      'Custom Request Submitted',
+      'Your custom artwork request has been sent to our team. We will review it shortly.',
+      'system',
+      newRequest.id
+    );
+
+    return {
+      success: true,
+      data: newRequest,
+      message: 'Custom artwork request submitted',
+    };
+  },
+
+  async cancelCustomOrder(id: string): Promise<ApiResponse<CustomOrder>> {
+    await delay(200);
+    if (!currentUser) throw new Error('Unauthorized');
+
+    const index = customOrders.findIndex(c => c.id === id);
+    if (index === -1) throw new Error('Request not found');
+
+    if (customOrders[index].customerId !== currentUser.id) {
+      throw new Error('Unauthorized');
+    }
+
+    if (customOrders[index].status !== 'pending') {
+      throw new Error('Only pending requests can be cancelled');
+    }
+
+    customOrders[index] = { ...customOrders[index], status: 'cancelled' };
+
+    return {
+      success: true,
+      data: customOrders[index],
+      message: 'Request cancelled',
     };
   },
 

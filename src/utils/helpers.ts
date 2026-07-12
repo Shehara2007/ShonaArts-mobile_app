@@ -28,6 +28,22 @@ export const formatDateTime = (dateString: string): string => {
   });
 };
 
+// Format a relative "time ago" string
+export const formatTimeAgo = (dateString: string): string => {
+  const now = new Date().getTime();
+  const then = new Date(dateString).getTime();
+  const diffSeconds = Math.max(0, Math.floor((now - then) / 1000));
+
+  if (diffSeconds < 60) return 'Just now';
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return formatDate(dateString);
+};
+
 // Validate email
 export const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

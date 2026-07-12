@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +15,7 @@ import { lightTheme } from '../theme';
 import { formatCurrency, formatDateTime, getOrderStatusColor } from '../utils/helpers';
 import { orderService } from '../api/services';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { setOrders } from '../redux/slices/orderSlice';
+import { setOrders, updateOrder } from '../redux/slices/orderSlice';
 import type { Order } from '../types';
 
 export const OrdersScreen: React.FC = () => {
@@ -46,6 +47,30 @@ export const OrdersScreen: React.FC = () => {
     setRefreshing(true);
     await loadOrders();
     setRefreshing(false);
+  };
+
+  const handleCancelOrder = (order: Order) => {
+    Alert.alert(
+      'Cancel Order',
+      `Are you sure you want to cancel order #${order.id}?`,
+      [
+        { text: 'Keep Order', style: 'cancel' },
+        {
+          text: 'Cancel Order',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const res = await orderService.cancel(order.id, 'Cancelled by customer');
+              if (res.success) {
+                dispatch(updateOrder(res.data));
+              }
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to cancel order');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getStatusIcon = (status: Order['status']) => {
@@ -116,6 +141,17 @@ export const OrdersScreen: React.FC = () => {
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalValue}>{formatCurrency(item.total)}</Text>
         </View>
+
+        {item.status === 'pending' && (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => handleCancelOrder(item)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="close-circle-outline" size={15} color={lightTheme.colors.error} />
+            <Text style={styles.cancelButtonText}>Cancel Order</Text>
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     );
   };
@@ -275,5 +311,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: lightTheme.fonts.bodyBold,
     color: lightTheme.colors.primary,
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: lightTheme.borderRadius.sm,
+    backgroundColor: lightTheme.colors.errorLight,
+  },
+  cancelButtonText: {
+    fontSize: 12,
+    fontFamily: lightTheme.fonts.bodySemibold,
+    color: lightTheme.colors.error,
   },
 });
