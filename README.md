@@ -107,7 +107,24 @@ npx tsc --noEmit   # Check for TypeScript errors
 
 ---
 
-## Troubleshooting
+## APK Build (Android)
+
+You can download and install the latest Android APK build of the Shona Arts app using the link below:
+
+**Expo Build:**
+https://expo.dev/accounts/sheharamalithi/projects/shona-arts/builds/a86072df-93cb-4d6b-847f-2ed194747dd6
+
+### Installation
+
+1. Open the build link above.
+2. Download the **APK** file from the **Artifacts** section.
+3. Transfer the APK to your Android device if downloaded on a computer.
+4. Enable **Settings → Security → Install unknown apps** (if prompted).
+5. Open the APK file and install the application.
+
+> **Note:** This APK is intended for testing and coursework submission purposes.
+
+
 
 - **Can't connect from phone** → run `npx expo start --tunnel`
 - **Weird errors after installing** → delete `node_modules` and
